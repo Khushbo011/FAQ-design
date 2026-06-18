@@ -1,0 +1,7 @@
+api_version = "2024-04"
+
+[[extensions]]
+name = "FAQify Pro Widget"
+handle = "faq-widget"
+uid = "461cef52-5333-3fa0-4866-edea8431cc1320cd4777"
+type = "theme"

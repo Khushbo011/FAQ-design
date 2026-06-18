@@ -1,0 +1,25 @@
+name = "FAQify Pro"
+client_id = "{{ SHOPIFY_API_KEY }}"
+application_url = "{{ APP_URL }}"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,write_script_tags"
+
+[auth]
+redirect_urls = ["{{ APP_URL }}/auth/callback"]
+
+[webhooks]
+api_version = "2025-01"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled", "app_subscriptions/update"]
+  uri = "/webhooks"
+
+[webhooks.privacy_compliance]
+customer_deletion_url = "https://{{ APP_URL }}/webhooks"
+customer_data_request_url = "https://{{ APP_URL }}/webhooks"
+shop_deletion_url = "https://{{ APP_URL }}/webhooks"
+
+[pos]
+embedded = false

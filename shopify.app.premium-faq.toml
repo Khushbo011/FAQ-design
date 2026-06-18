@@ -1,0 +1,35 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "premium-faq"
+client_id = "b023b241cd4958420fede9637d3f1afb"
+application_url = "https://shopify.dev/apps/default-app-home"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = ""
+
+[auth]
+redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = [
+  "app/uninstalled",
+  "app_subscriptions/update"
+]
+
+[webhooks.privacy_compliance]
+customer_deletion_url = "https://shopify.dev/apps/default-app-home/webhooks"
+customer_data_request_url = "https://shopify.dev/apps/default-app-home/webhooks"
+shop_deletion_url = "https://shopify.dev/apps/default-app-home/webhooks"
+
+[pos]
+embedded = false
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true

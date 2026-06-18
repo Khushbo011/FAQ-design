@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model FAQ {
+  id         String      @id @default(cuid())
+  shop       String
+  question   String
+  answer     String // stores rich HTML
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  position   Int         @default(0)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  analytics  Analytics[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  shop      String
+  name      String
+  position  Int      @default(0)
+  faqs      FAQ[]
+  createdAt DateTime @default(now())
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  shop      String
+  faqId     String
+  faq       FAQ      @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  event     String // "view" | "expand" | "helpful" | "not_helpful"
+  page      String? // URL where event occurred
+  createdAt DateTime @default(now())
+}
+
+model BillingRecord {
+  id               String    @id @default(cuid())
+  shop             String    @unique
+  plan             String // "free" | "basic" | "pro"
+  chargeId         String?
+  status           String    @default("active")
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}

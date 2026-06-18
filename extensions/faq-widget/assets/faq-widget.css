@@ -1,0 +1,118 @@
+.faqify-widget-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: inherit;
+}
+
+.faqify-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.faqify-search {
+  margin-bottom: 20px;
+}
+
+.faqify-search-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: var(--faqify-radius);
+  font-size: 16px;
+}
+
+.faqify-accordion-item {
+  border: 1px solid #eee;
+  margin-bottom: 10px;
+  border-radius: var(--faqify-radius);
+  overflow: hidden;
+  background: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .faqify-accordion-item {
+     background: #222;
+     border-color: #333;
+     color: #eee;
+  }
+}
+
+.faqify-accordion-header {
+  width: 100%;
+  padding: 15px 20px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: inherit;
+}
+
+.faqify-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background: rgba(0,0,0,0.02);
+}
+
+@media (prefers-color-scheme: dark) {
+  .faqify-accordion-content {
+     background: rgba(255,255,255,0.02);
+  }
+}
+
+.faqify-answer-inner {
+  padding: 15px 20px;
+  line-height: 1.6;
+}
+
+.faqify-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.faqify-grid-card {
+  border: 1px solid #eee;
+  padding: 20px;
+  border-radius: var(--faqify-radius);
+  background: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .faqify-grid-card {
+     background: #222;
+     border-color: #333;
+  }
+}
+
+.faqify-votes {
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #eee;
+}
+
+.faqify-vote-btn {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.faqify-vote-btn:hover {
+  background: #f9f9f9;
+}
+
+.faqify-branding {
+  text-align: center;
+  margin-top: 20px;
+  opacity: 0.7;
+}

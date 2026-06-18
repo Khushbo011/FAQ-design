@@ -1,0 +1,51 @@
+<div class="faqify-widget-container" 
+     data-shop="{{ shop.domain }}" 
+     data-category="{{ section.settings.category_filter }}"
+     data-style="{{ section.settings.display_style }}"
+     data-accent="{{ section.settings.accent_color }}"
+     data-radius="{{ section.settings.border_radius }}"
+     data-search="{{ section.settings.show_search }}"
+     data-votes="{{ section.settings.show_helpful_votes }}">
+  
+  {% if section.settings.title != blank %}
+    <h2 class="faqify-title" style="color: {{ section.settings.accent_color }}">{{ section.settings.title }}</h2>
+  {% endif %}
+
+  {% if section.settings.show_search %}
+    <div class="faqify-search">
+      <input type="text" placeholder="Search questions..." class="faqify-search-input" />
+    </div>
+  {% endif %}
+
+  <div class="faqify-content-area" style="--faqify-radius: {{ section.settings.border_radius }}px; --faqify-accent: {{ section.settings.accent_color }};">
+    <!-- FAQs will be dynamically rendered here by JS -->
+    <div class="faqify-loading">Loading FAQs...</div>
+  </div>
+
+  {% if section.settings.show_branding %}
+    <div class="faqify-branding">
+      <small>Powered by <a href="#" target="_blank">FAQify Pro</a></small>
+    </div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "FAQify Pro — FAQ Section",
+  "target": "section",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Section Title", "default": "Frequently Asked Questions" },
+    { "type": "select", "id": "display_style", "label": "Display Style", "options": [
+        {"value": "accordion", "label": "Accordion"},
+        {"value": "grid", "label": "Grid Cards"},
+        {"value": "tabs", "label": "Tabs by Category"}
+    ], "default": "accordion" },
+    { "type": "select", "id": "category_filter", "label": "Show Category", "options": [{"value": "all", "label": "All Categories"}], "default": "all" },
+    { "type": "checkbox", "id": "show_search", "label": "Show Search Bar", "default": true },
+    { "type": "checkbox", "id": "show_helpful_votes", "label": "Show Helpful/Not Helpful Buttons", "default": true },
+    { "type": "color", "id": "accent_color", "label": "Accent Color", "default": "#000000" },
+    { "type": "range", "id": "border_radius", "label": "Border Radius", "min": 0, "max": 20, "step": 1, "default": 8 },
+    { "type": "checkbox", "id": "show_branding", "label": "Show Powered by FAQify", "default": true }
+  ]
+}
+{% endschema %}

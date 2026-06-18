@@ -68,8 +68,8 @@ export default function BillingPage() {
   };
 
   const isFree = activePlan === "Free";
-  const isStarter = activePlan === PLAN_STARTER;
-  const isPro = activePlan === PLAN_PRO;
+  const isStarter = activePlan === "Starter Plan";
+  const isPro = activePlan === "Pro Plan";
 
   return (
     <Page fullWidth>

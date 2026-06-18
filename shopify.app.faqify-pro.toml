@@ -2,7 +2,7 @@
 
 client_id = "7724e554658f3cbf353200d3b1e1b9ce"
 name = "faqify-pro"
-application_url = "https://example.com"
+application_url = "https://faq-design-g7wb.vercel.app"
 embedded = true
 
 [webhooks]
@@ -13,7 +13,7 @@ api_version = "2026-07"
 scopes = ""
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://faq-design-g7wb.vercel.app/api/auth" ]
 
 [build]
 automatically_update_urls_on_dev = true

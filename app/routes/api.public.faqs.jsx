@@ -22,6 +22,10 @@ export const loader = async ({ request }) => {
       orderBy: { position: "asc" },
     });
 
+    const settings = await db.storeSettings.findUnique({
+      where: { shop },
+    }) || { activeTemplate: "classic", templateSettings: "{}" };
+
     const formattedFaqs = faqs.map(faq => ({
       id: faq.id,
       question: faq.question,
@@ -36,7 +40,11 @@ export const loader = async ({ request }) => {
       "Access-Control-Allow-Methods": "GET, OPTIONS",
     });
 
-    return json(formattedFaqs, { headers });
+    return json({
+      faqs: formattedFaqs,
+      activeTemplate: settings.activeTemplate,
+      templateSettings: JSON.parse(settings.templateSettings || "{}")
+    }, { headers });
   } catch (error) {
     return json({ error: "Server error" }, { status: 500 });
   }

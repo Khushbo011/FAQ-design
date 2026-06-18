@@ -73,3 +73,12 @@ model BillingRecord {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+model StoreSettings {
+  id               String   @id @default(cuid())
+  shop             String   @unique
+  activeTemplate   String   @default("classic")
+  templateSettings String   @default("{}") // JSON string for colors, typography, etc.
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

@@ -2,7 +2,7 @@
   "name": "faqify-pro",
   "private": true,
   "scripts": {
-    "build": "remix vite:build",
+    "build": "node scripts/prepare-vercel.js && prisma generate && remix vite:build",
     "dev": "shopify app dev",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",

@@ -142,15 +142,15 @@ export default function GalleryPage() {
   const notHelpful = analytics.filter(a => a.event === "not_helpful").length;
 
   const tabs = [
-    { id: 'manager', content: 'Template Manager' },
+    { id: 'manager', content: 'FAQ Manager' },
     { id: 'analytics', content: 'Analytics' },
   ];
 
   return (
     <Page
-      title="Templates"
-      subtitle={`${faqs.length} Templates created`}
-      primaryAction={{ content: "Create Template", onAction: () => { setEditingFaq(null); setEditorOpen(true); } }}
+      title="Manage FAQs"
+      subtitle={`${faqs.length} FAQs created`}
+      primaryAction={{ content: "Create FAQ", onAction: () => { setEditingFaq(null); setEditorOpen(true); } }}
       secondaryActions={[{ content: "Import / Export", onAction: () => setImportExportOpen(true) }]}
     >
       <Tabs tabs={tabs} selected={selectedTab} onSelect={handleTabChange} />
@@ -160,7 +160,7 @@ export default function GalleryPage() {
           <div style={{ padding: '20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <TextField
-                placeholder="Search templates..."
+                placeholder="Search FAQs..."
                 value={searchQuery}
                 onChange={setSearchQuery}
                 autoComplete="off"
@@ -186,11 +186,11 @@ export default function GalleryPage() {
 
           {faqs.length === 0 ? (
             <EmptyState
-              heading="Create your first template"
-              action={{ content: "Create Template", onAction: () => { setEditingFaq(null); setEditorOpen(true); } }}
+              heading="Create your first FAQ"
+              action={{ content: "Create FAQ", onAction: () => { setEditingFaq(null); setEditorOpen(true); } }}
               image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
             >
-              <p>Start building your templates to display on your storefront.</p>
+              <p>Start building your FAQs to display on your storefront.</p>
             </EmptyState>
           ) : (
             <FAQList

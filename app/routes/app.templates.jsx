@@ -19,9 +19,9 @@ export const loader = async ({ request }) => {
   let activePlan = "Free";
   if (hasActivePayment) {
     if (appSubscriptions.some(sub => sub.name === PLAN_PRO)) {
-      activePlan = PLAN_PRO;
+      activePlan = "Pro";
     } else if (appSubscriptions.some(sub => sub.name === PLAN_STARTER)) {
-      activePlan = PLAN_STARTER;
+      activePlan = "Starter";
     }
   }
 
@@ -59,8 +59,8 @@ export default function TemplatesPage() {
 
   const canUseTemplate = (tier) => {
     if (tier === "free") return true;
-    if (tier === "starter" && (activePlan === PLAN_STARTER || activePlan === PLAN_PRO)) return true;
-    if (tier === "pro" && activePlan === PLAN_PRO) return true;
+    if (tier === "starter" && (activePlan === "Starter" || activePlan === "Pro")) return true;
+    if (tier === "pro" && activePlan === "Pro") return true;
     return false;
   };
 
@@ -115,7 +115,7 @@ export default function TemplatesPage() {
 
         <Box paddingBlockEnd="400">
           <InlineStack align="space-between">
-            <Text variant="headingMd" as="h2">Current Plan: <Badge tone={activePlan === PLAN_PRO ? "success" : activePlan === PLAN_STARTER ? "info" : "new"}>{activePlan}</Badge></Text>
+            <Text variant="headingMd" as="h2">Current Plan: <Badge tone={activePlan === "Pro" ? "success" : activePlan === "Starter" ? "info" : "new"}>{activePlan}</Badge></Text>
             <Button variant="primary" onClick={() => navigate("/app/billing")}>Manage Plan</Button>
           </InlineStack>
         </Box>

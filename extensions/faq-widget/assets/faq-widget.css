@@ -1,13 +1,20 @@
 .faqify-widget-container {
-  max-width: 800px;
+  max-width: var(--faqify-max-width, 800px);
   margin: 0 auto;
-  padding: 20px;
-  font-family: inherit;
+  padding: var(--faqify-card-padding, 20px);
+  font-family: var(--faqify-font, inherit);
+  background: var(--faqify-bg, transparent);
+  color: var(--faqify-text, inherit);
+  transition: all 0.3s ease;
 }
 
 .faqify-title {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  font-size: var(--faqify-heading-size, 24px);
+  font-weight: 700;
+  color: var(--faqify-primary, #000);
+  letter-spacing: -0.02em;
 }
 
 .faqify-search {
@@ -16,103 +23,179 @@
 
 .faqify-search-input {
   width: 100%;
-  padding: 10px 15px;
-  border: 1px solid #ccc;
-  border-radius: var(--faqify-radius);
-  font-size: 16px;
+  padding: 12px 18px;
+  border: 1px solid var(--faqify-border, #ccc);
+  border-radius: var(--faqify-radius, 8px);
+  font-size: var(--faqify-body-size, 16px);
+  background: var(--faqify-card-bg, #fff);
+  color: var(--faqify-text, inherit);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.faqify-search-input:focus {
+  border-color: var(--faqify-primary, #000);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Accordion ─── */
 .faqify-accordion-item {
-  border: 1px solid #eee;
-  margin-bottom: 10px;
-  border-radius: var(--faqify-radius);
+  border: var(--faqify-border-width, 1px) solid var(--faqify-border, #eee);
+  margin-bottom: var(--faqify-spacing, 10px);
+  border-radius: var(--faqify-radius, 8px);
   overflow: hidden;
-  background: white;
+  background: var(--faqify-card-bg, #fff);
+  box-shadow: var(--faqify-shadow, none);
+  transition: all 0.25s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .faqify-accordion-item {
-     background: #222;
-     border-color: #333;
-     color: #eee;
-  }
+.faqify-accordion-item:hover {
+  transform: var(--faqify-hover-transform, none);
+  box-shadow: var(--faqify-hover-shadow, var(--faqify-shadow, none));
+  border-color: var(--faqify-hover-border, var(--faqify-border, #eee));
+}
+
+.faqify-accordion-item.active {
+  border-color: var(--faqify-primary, #000);
 }
 
 .faqify-accordion-header {
   width: 100%;
-  padding: 15px 20px;
+  padding: var(--faqify-card-padding, 15px) calc(var(--faqify-card-padding, 15px) + 5px);
   background: transparent;
   border: none;
   text-align: left;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: calc(var(--faqify-body-size, 16px) + 1px);
+  font-weight: var(--faqify-question-weight, 600);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: inherit;
+  color: var(--faqify-text, inherit);
+  font-family: var(--faqify-font, inherit);
+  line-height: 1.4;
+  gap: 12px;
+}
+
+.faqify-icon {
+  color: var(--faqify-icon-color, #6b7280);
+  font-size: 18px;
+  font-weight: bold;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.faqify-accordion-item.active .faqify-icon {
+  transform: rotate(var(--faqify-icon-rotate, 90deg));
 }
 
 .faqify-accordion-content {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease-out;
-  background: rgba(0,0,0,0.02);
-}
-
-@media (prefers-color-scheme: dark) {
-  .faqify-accordion-content {
-     background: rgba(255,255,255,0.02);
-  }
 }
 
 .faqify-answer-inner {
-  padding: 15px 20px;
-  line-height: 1.6;
+  padding: 0 var(--faqify-card-padding, 20px) var(--faqify-card-padding, 20px);
+  line-height: 1.7;
+  font-size: var(--faqify-body-size, 15px);
+  opacity: 0.8;
+  color: var(--faqify-text, inherit);
 }
 
+/* ─── Grid ─── */
 .faqify-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--faqify-spacing, 20px);
 }
 
 .faqify-grid-card {
-  border: 1px solid #eee;
-  padding: 20px;
-  border-radius: var(--faqify-radius);
-  background: white;
+  border: var(--faqify-border-width, 1px) solid var(--faqify-border, #eee);
+  padding: var(--faqify-card-padding, 20px);
+  border-radius: var(--faqify-radius, 8px);
+  background: var(--faqify-card-bg, #fff);
+  box-shadow: var(--faqify-shadow, none);
+  transition: all 0.25s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .faqify-grid-card {
-     background: #222;
-     border-color: #333;
-  }
+.faqify-grid-card:hover {
+  transform: var(--faqify-hover-transform, none);
+  box-shadow: var(--faqify-hover-shadow, var(--faqify-shadow, none));
+  border-color: var(--faqify-hover-border, var(--faqify-border, #eee));
 }
 
+.faqify-grid-card h3 {
+  font-size: calc(var(--faqify-body-size, 16px) + 1px);
+  font-weight: var(--faqify-question-weight, 600);
+  margin-bottom: 10px;
+  color: var(--faqify-text, inherit);
+  line-height: 1.4;
+}
+
+.faqify-grid-card > div {
+  font-size: var(--faqify-body-size, 15px);
+  line-height: 1.6;
+  opacity: 0.8;
+  color: var(--faqify-text, inherit);
+}
+
+/* ─── Votes ─── */
 .faqify-votes {
-  padding: 10px 20px;
+  padding: 10px var(--faqify-card-padding, 20px);
   display: flex;
   align-items: center;
   gap: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--faqify-border, #eee);
+  font-size: 13px;
 }
 
 .faqify-vote-btn {
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border: 1px solid var(--faqify-border, #ddd);
+  background: var(--faqify-card-bg, #fff);
+  border-radius: var(--faqify-radius, 4px);
   cursor: pointer;
+  font-size: 13px;
+  color: var(--faqify-text, inherit);
+  transition: all 0.15s ease;
 }
 
 .faqify-vote-btn:hover {
-  background: #f9f9f9;
+  border-color: var(--faqify-primary, #000);
+  color: var(--faqify-primary, #000);
 }
 
+/* ─── Branding ─── */
 .faqify-branding {
   text-align: center;
-  margin-top: 20px;
-  opacity: 0.7;
+  margin-top: 24px;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.faqify-branding a {
+  color: var(--faqify-primary, inherit);
+  text-decoration: none;
+}
+
+/* ─── Loading ─── */
+.faqify-loading {
+  text-align: center;
+  padding: 40px;
+  opacity: 0.5;
+  font-size: 14px;
+}
+
+/* ─── Dark mode fallback ─── */
+@media (prefers-color-scheme: dark) {
+  .faqify-accordion-item:not([style]) {
+    background: #222;
+    border-color: #333;
+    color: #eee;
+  }
+  .faqify-grid-card:not([style]) {
+    background: #222;
+    border-color: #333;
+  }
 }

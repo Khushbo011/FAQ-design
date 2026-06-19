@@ -28,40 +28,39 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
+  const cleanShopName = session.shop.replace('.myshopify.com', '');
+  const returnUrl = `https://admin.shopify.com/store/${cleanShopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
+
   try {
     if (plan === "starter") {
       await billing.require({
         plans: [PLAN_STARTER],
         isTest: true,
-        onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true }),
+        onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true, returnUrl }),
       });
     } else if (plan === "pro") {
       await billing.require({
         plans: [PLAN_PRO],
         isTest: true,
-        onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true }),
+        onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true, returnUrl }),
       });
     } else if (plan === "cancel") {
-    // Attempt to cancel all active plans
-    const { appSubscriptions } = await billing.check({
-      plans: [PLAN_STARTER, PLAN_PRO],
-      isTest: true,
-    });
-    for (const sub of appSubscriptions) {
-      await billing.cancel({
-        subscriptionId: sub.id,
+      // Attempt to cancel all active plans
+      const { appSubscriptions } = await billing.check({
+        plans: [PLAN_STARTER, PLAN_PRO],
         isTest: true,
-        prorate: true,
       });
+      for (const sub of appSubscriptions) {
+        await billing.cancel({
+          subscriptionId: sub.id,
+          isTest: true,
+          prorate: true,
+        });
       }
       return redirect("/app/billing");
     }
   } catch (error) {
-    // billing.request() throws a redirect response on success — let it propagate
-    if (error instanceof Response) {
-      throw error;
-    }
-    console.error("Billing error:", error?.message, error?.response?.errors);
+    console.error("Exact billing error:", error, error?.response?.errors, error?.message);
     throw error;
   }
 
@@ -83,7 +82,8 @@ export default function BillingPage() {
   return (
     <Page fullWidth>
       <div className="billing-container">
-        <style dangerouslySetInnerHTML={{__html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           .billing-container {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             text-align: center;
@@ -263,7 +263,7 @@ export default function BillingPage() {
 
         <h1 className="billing-title">Choose Your Plan</h1>
         <p className="billing-subtitle">Scale your FAQ game with premium templates and styling.</p>
-        
+
         <div className="current-plan-badge">
           ✦ Current plan: {activePlan}
         </div>
@@ -285,7 +285,7 @@ export default function BillingPage() {
             {isFree ? (
               <div className="active-label">✓ Current Plan</div>
             ) : (
-              <button 
+              <button
                 className="action-btn btn-outline"
                 onClick={() => handleUpgrade("cancel")}
                 disabled={fetcher.state !== "idle"}
@@ -312,7 +312,7 @@ export default function BillingPage() {
             {isStarter ? (
               <div className="active-label">✓ Current Plan</div>
             ) : (
-              <button 
+              <button
                 className="action-btn btn-primary"
                 onClick={() => handleUpgrade("starter")}
                 disabled={fetcher.state !== "idle"}
@@ -338,7 +338,7 @@ export default function BillingPage() {
             {isPro ? (
               <div className="active-label">✓ Current Plan</div>
             ) : (
-              <button 
+              <button
                 className="action-btn btn-pro"
                 onClick={() => handleUpgrade("pro")}
                 disabled={fetcher.state !== "idle"}

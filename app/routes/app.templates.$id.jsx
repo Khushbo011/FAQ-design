@@ -1,5 +1,5 @@
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useFetcher, useNavigate, useSubmit, useNavigation, Link } from "@remix-run/react";
+import { useLoaderData, useFetcher, useNavigate, useSubmit, useNavigation, useRouteError, Link } from "@remix-run/react";
 import { Page, Layout, Card, Text, Button, BlockStack, InlineStack, TextField, Box, Divider, Icon } from "@shopify/polaris";
 import { ArrowLeftIcon } from "@shopify/polaris-icons";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
@@ -193,6 +193,26 @@ export default function TemplateEditor() {
           </div>
         </div>
       </BlockStack>
+    </Page>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  console.error("Template Editor Error:", error);
+  
+  return (
+    <Page>
+      <Layout>
+        <Layout.Section>
+          <Card padding="400">
+            <BlockStack gap="400">
+              <Text variant="headingLg" as="h2" tone="critical">Failed to load template editor</Text>
+              <Text as="p">{error?.message || "An unknown error occurred."}</Text>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }

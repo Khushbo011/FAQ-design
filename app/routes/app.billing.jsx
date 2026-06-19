@@ -28,17 +28,20 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
+  const url = new URL(request.url);
+  const returnUrl = `${url.origin}/app/approval`;
+
   if (plan === "starter") {
     await billing.require({
       plans: [PLAN_STARTER],
       isTest: true,
-      onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true }),
+      onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true, returnUrl }),
     });
   } else if (plan === "pro") {
     await billing.require({
       plans: [PLAN_PRO],
       isTest: true,
-      onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true }),
+      onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true, returnUrl }),
     });
   } else if (plan === "cancel") {
     // Attempt to cancel all active plans

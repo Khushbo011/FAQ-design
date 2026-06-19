@@ -1,10 +1,9 @@
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
-import { Page, Layout, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box, Divider, Modal, TextField } from "@shopify/polaris";
+import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
 import { getStoreSettings, updateStoreSettings } from "../models/settings.server";
 import { TEMPLATES } from "../lib/templates";
-import { useState } from "react";
 
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
@@ -40,9 +39,6 @@ export const action = async ({ request }) => {
   if (actionType === "applyTemplate") {
     const templateId = formData.get("templateId");
     await updateStoreSettings(shop, { activeTemplate: templateId });
-  } else if (actionType === "updateSettings") {
-    const templateSettings = formData.get("templateSettings");
-    await updateStoreSettings(shop, { templateSettings });
   }
 
   return json({ success: true });
@@ -52,10 +48,6 @@ export default function TemplatesPage() {
   const { activePlan, settings, templates } = useLoaderData();
   const fetcher = useFetcher();
   const navigate = useNavigate();
-
-  const [previewTemplate, setPreviewTemplate] = useState(null);
-  const [editTemplate, setEditTemplate] = useState(null);
-  const [draftSettings, setDraftSettings] = useState({});
 
   const canUseTemplate = (tier) => {
     if (tier === "free") return true;
@@ -73,32 +65,8 @@ export default function TemplatesPage() {
     navigate("/app/billing");
   };
 
-  const handleEditOpen = (template) => {
-    setEditTemplate(template);
-    // Parse existing settings if they exist and match the template, otherwise use defaults
-    try {
-      const saved = JSON.parse(settings.templateSettings || "{}");
-      if (settings.activeTemplate === template.id && Object.keys(saved).length > 0) {
-        setDraftSettings(saved);
-      } else {
-        setDraftSettings(template.defaultSettings);
-      }
-    } catch {
-      setDraftSettings(template.defaultSettings);
-    }
-  };
-
-  const handleSaveSettings = () => {
-    fetcher.submit(
-      { actionType: "updateSettings", templateSettings: JSON.stringify(draftSettings) },
-      { method: "post" }
-    );
-    // Auto-apply if saving
-    if (settings.activeTemplate !== editTemplate.id) {
-      handleApply(editTemplate.id);
-    }
-    setEditTemplate(null);
-    shopify.toast.show("Design settings saved!");
+  const handlePreviewCustomize = (template) => {
+    navigate(`/app/templates/${template.id}`);
   };
 
   return (
@@ -139,8 +107,10 @@ export default function TemplatesPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  opacity: isUnlocked ? 1 : 0.6
-                }}>
+                  opacity: isUnlocked ? 1 : 0.6,
+                  transition: 'opacity 0.2s ease-in-out',
+                  cursor: 'pointer'
+                }} onClick={() => handlePreviewCustomize(template)}>
                   {!isUnlocked && (
                     <div style={{ background: 'rgba(0,0,0,0.6)', color: 'white', padding: '4px 12px', borderRadius: '12px' }}>
                       Locked
@@ -159,10 +129,9 @@ export default function TemplatesPage() {
                     <Text variant="bodySm" tone="subdued">{template.description}</Text>
                     
                     <InlineStack align="center" blockAlign="center" gap="400">
-                      <Button variant="plain" onClick={() => setPreviewTemplate(template)}>Live Preview</Button>
-                      {isUnlocked && template.tier !== "free" && (
-                        <Button variant="plain" tone="critical" onClick={() => handleEditOpen(template)}>Edit Design</Button>
-                      )}
+                      <Button variant="plain" onClick={() => handlePreviewCustomize(template)}>
+                        {isUnlocked && template.tier !== "free" ? "Customize & Preview" : "Live Preview"}
+                      </Button>
                     </InlineStack>
 
                     {isUnlocked ? (
@@ -191,87 +160,6 @@ export default function TemplatesPage() {
           })}
         </div>
       </BlockStack>
-
-      {/* Live Preview Modal */}
-      <Modal
-        open={!!previewTemplate}
-        onClose={() => setPreviewTemplate(null)}
-        title={`Preview: ${previewTemplate?.name}`}
-        size="large"
-        primaryAction={{
-          content: "Close Preview",
-          onAction: () => setPreviewTemplate(null),
-        }}
-      >
-        <Modal.Section>
-          <div style={{ 
-            minHeight: '400px', 
-            backgroundColor: previewTemplate?.defaultSettings?.backgroundColor || '#fff',
-            color: previewTemplate?.defaultSettings?.textColor || '#000',
-            padding: '20px',
-            borderRadius: previewTemplate?.defaultSettings?.borderRadius || '0px',
-            border: '1px solid #ddd'
-          }}>
-            <h2 style={{ color: previewTemplate?.defaultSettings?.primaryColor || '#000', marginBottom: '20px' }}>Frequently Asked Questions</h2>
-            <div style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-              <strong>How does the free trial work?</strong>
-              <p style={{ marginTop: '10px' }}>This is a preview of how your FAQs will look using the {previewTemplate?.name} template. The actual appearance may vary based on your store's theme CSS.</p>
-            </div>
-            <div style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-              <strong>Can I cancel anytime?</strong>
-              <p style={{ marginTop: '10px' }}>Yes, you can cancel your subscription at any time from the billing page.</p>
-            </div>
-          </div>
-        </Modal.Section>
-      </Modal>
-
-      {/* Edit Design Modal */}
-      <Modal
-        open={!!editTemplate}
-        onClose={() => setEditTemplate(null)}
-        title={`Edit Design: ${editTemplate?.name}`}
-        primaryAction={{
-          content: "Save Design",
-          onAction: handleSaveSettings,
-        }}
-        secondaryActions={[
-          {
-            content: "Cancel",
-            onAction: () => setEditTemplate(null),
-          },
-        ]}
-      >
-        <Modal.Section>
-          <BlockStack gap="400">
-            <Text variant="bodyMd" tone="subdued">Customize colors and layout. Note: Hex color codes must include the #.</Text>
-            <TextField
-              label="Primary Color"
-              value={draftSettings.primaryColor || ""}
-              onChange={(v) => setDraftSettings(s => ({ ...s, primaryColor: v }))}
-              autoComplete="off"
-            />
-            <TextField
-              label="Background Color"
-              value={draftSettings.backgroundColor || ""}
-              onChange={(v) => setDraftSettings(s => ({ ...s, backgroundColor: v }))}
-              autoComplete="off"
-            />
-            <TextField
-              label="Text Color"
-              value={draftSettings.textColor || ""}
-              onChange={(v) => setDraftSettings(s => ({ ...s, textColor: v }))}
-              autoComplete="off"
-            />
-            <TextField
-              label="Border Radius"
-              value={draftSettings.borderRadius || ""}
-              onChange={(v) => setDraftSettings(s => ({ ...s, borderRadius: v }))}
-              autoComplete="off"
-              helpText="e.g. 4px, 8px, 12px"
-            />
-          </BlockStack>
-        </Modal.Section>
-      </Modal>
     </Page>
   );
 }

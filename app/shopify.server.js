@@ -4,6 +4,7 @@ import {
   AppDistribution,
   shopifyApp,
   BillingInterval,
+  BillingReplacementBehavior,
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
@@ -29,14 +30,24 @@ const shopify = shopifyApp({
     : {}),
   billing: {
     [PLAN_STARTER]: {
-      amount: 49.00,
-      currencyCode: "USD",
-      interval: BillingInterval.Every30Days,
+      replacementBehavior: BillingReplacementBehavior.ApplyImmediately,
+      lineItems: [
+        {
+          amount: 49,
+          currencyCode: "USD",
+          interval: BillingInterval.Every30Days,
+        }
+      ]
     },
     [PLAN_PRO]: {
-      amount: 99.00,
-      currencyCode: "USD",
-      interval: BillingInterval.Every30Days,
+      replacementBehavior: BillingReplacementBehavior.ApplyImmediately,
+      lineItems: [
+        {
+          amount: 99,
+          currencyCode: "USD",
+          interval: BillingInterval.Every30Days,
+        }
+      ]
     },
   },
 });

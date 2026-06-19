@@ -39,9 +39,7 @@ export const loader = async ({ request, params }) => {
     return false;
   };
 
-  if (!canUseTemplate(template.tier)) {
-    return redirect("/app/billing");
-  }
+  const isUnlocked = canUseTemplate(template.tier);
 
   const settings = await getStoreSettings(shop);
   
@@ -58,7 +56,7 @@ export const loader = async ({ request, params }) => {
     savedSettings = template.defaultSettings;
   }
 
-  return json({ template, savedSettings, isCurrentlyActive: settings.activeTemplate === template.id });
+  return json({ template, savedSettings, isCurrentlyActive: settings.activeTemplate === template.id, isUnlocked });
 };
 
 export const action = async ({ request, params }) => {
@@ -78,7 +76,7 @@ export const action = async ({ request, params }) => {
 };
 
 export default function TemplateEditor() {
-  const { template, savedSettings, isCurrentlyActive } = useLoaderData();
+  const { template, savedSettings, isCurrentlyActive, isUnlocked } = useLoaderData();
   const navigate = useNavigate();
   const submit = useSubmit();
   const fetcher = useFetcher();
@@ -86,6 +84,10 @@ export default function TemplateEditor() {
   const [draftSettings, setDraftSettings] = useState(savedSettings);
 
   const handleSave = () => {
+    if (!isUnlocked) {
+      navigate("/app/billing");
+      return;
+    }
     const formData = new FormData();
     formData.append("templateSettings", JSON.stringify(draftSettings));
     submit(formData, { method: "post" });
@@ -100,8 +102,8 @@ export default function TemplateEditor() {
             <Button icon={ArrowLeftIcon} onClick={() => navigate("/app/templates")} variant="plain" />
             <Text variant="headingLg" as="h1">Customize: {template.name}</Text>
           </InlineStack>
-          <Button variant="primary" onClick={handleSave}>
-            Apply to Store
+          <Button variant={isUnlocked ? "primary" : "secondary"} onClick={handleSave}>
+            {isUnlocked ? "Apply to Store" : "Upgrade to Apply"}
           </Button>
         </InlineStack>
         

@@ -28,20 +28,18 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/approval`;
-
   try {
     if (plan === "starter") {
       await billing.require({
         plans: [PLAN_STARTER],
         isTest: true,
-        onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true, returnUrl }),
+        onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true }),
       });
     } else if (plan === "pro") {
       await billing.require({
         plans: [PLAN_PRO],
         isTest: true,
-        onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true, returnUrl }),
+        onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true }),
       });
     } else if (plan === "cancel") {
     // Attempt to cancel all active plans
@@ -59,7 +57,11 @@ export const action = async ({ request }) => {
       return redirect("/app/billing");
     }
   } catch (error) {
-    console.error("Exact billing error:", error, error?.response?.errors, error?.message);
+    // billing.request() throws a redirect response on success — let it propagate
+    if (error instanceof Response) {
+      throw error;
+    }
+    console.error("Billing error:", error?.message, error?.response?.errors);
     throw error;
   }
 

@@ -28,7 +28,9 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/approval`;
+  const host = request.headers.get("X-Forwarded-Host") || request.headers.get("host");
+  const protocol = request.headers.get("X-Forwarded-Proto") || "https";
+  const returnUrl = `${protocol}://${host}/app/approval`;
 
   try {
     if (plan === "starter") {

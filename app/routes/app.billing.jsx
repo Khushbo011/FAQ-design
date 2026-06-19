@@ -24,13 +24,12 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  const { billing } = await authenticate.admin(request);
+  const { billing, session } = await authenticate.admin(request);
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const host = request.headers.get("X-Forwarded-Host") || request.headers.get("host");
-  const protocol = request.headers.get("X-Forwarded-Proto") || "https";
-  const returnUrl = `${protocol}://${host}/app/approval`;
+  const cleanShopName = session.shop.replace('.myshopify.com', '');
+  const returnUrl = `https://admin.shopify.com/store/${cleanShopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
 
   try {
     if (plan === "starter") {

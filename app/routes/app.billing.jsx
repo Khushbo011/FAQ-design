@@ -28,8 +28,8 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const cleanShopName = session.shop.replace('.myshopify.com', '');
-  const returnUrl = `https://admin.shopify.com/store/${cleanShopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
+  const url = new URL(request.url);
+  const returnUrl = `${url.origin}/app/approval`;
 
   try {
     if (plan === "starter") {
@@ -60,6 +60,9 @@ export const action = async ({ request }) => {
       return redirect("/app/billing");
     }
   } catch (error) {
+    if (error instanceof Response) {
+      throw error;
+    }
     console.error("Exact billing error:", error, error?.response?.errors, error?.message);
     throw error;
   }

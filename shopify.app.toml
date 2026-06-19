@@ -7,7 +7,12 @@ embedded = true
 scopes = "read_products,write_script_tags"
 
 [auth]
-redirect_urls = ["{{ APP_URL }}/auth/callback"]
+redirect_urls = [
+  "{{ APP_URL }}/auth/callback",
+  "{{ APP_URL }}/auth/shopify/callback",
+  "{{ APP_URL }}/api/auth/callback",
+  "{{ APP_URL }}/app/approval"
+]
 
 [webhooks]
 api_version = "2025-01"

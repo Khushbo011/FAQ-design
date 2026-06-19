@@ -28,8 +28,7 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const cleanShopName = session.shop.replace('.myshopify.com', '');
-  const returnUrl = `https://admin.shopify.com/store/${cleanShopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
+  const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/approval`;
 
   try {
     if (plan === "starter") {

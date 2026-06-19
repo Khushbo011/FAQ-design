@@ -1,6 +1,6 @@
 import React from "react";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useFetcher } from "@remix-run/react";
+import { useLoaderData, useFetcher, useRouteError } from "@remix-run/react";
 import { Page, Layout, Badge } from "@shopify/polaris";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
 
@@ -28,22 +28,22 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const url = new URL(request.url);
-  const returnUrl = `${url.origin}/app/approval`;
+  const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/approval`;
 
-  if (plan === "starter") {
-    await billing.require({
-      plans: [PLAN_STARTER],
-      isTest: true,
-      onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true, returnUrl }),
-    });
-  } else if (plan === "pro") {
-    await billing.require({
-      plans: [PLAN_PRO],
-      isTest: true,
-      onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true, returnUrl }),
-    });
-  } else if (plan === "cancel") {
+  try {
+    if (plan === "starter") {
+      await billing.require({
+        plans: [PLAN_STARTER],
+        isTest: true,
+        onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true, returnUrl }),
+      });
+    } else if (plan === "pro") {
+      await billing.require({
+        plans: [PLAN_PRO],
+        isTest: true,
+        onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true, returnUrl }),
+      });
+    } else if (plan === "cancel") {
     // Attempt to cancel all active plans
     const { appSubscriptions } = await billing.check({
       plans: [PLAN_STARTER, PLAN_PRO],
@@ -55,8 +55,12 @@ export const action = async ({ request }) => {
         isTest: true,
         prorate: true,
       });
+      }
+      return redirect("/app/billing");
     }
-    return redirect("/app/billing");
+  } catch (error) {
+    console.error("Exact billing error:", error, error?.response?.errors, error?.message);
+    throw error;
   }
 
   return json({ success: true });
@@ -343,6 +347,25 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
+    </Page>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const errorMessage = error?.message || "An unexpected error occurred during billing.";
+
+  return (
+    <Page>
+      <Layout>
+        <Layout.Section>
+          <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#fdf2f2', borderRadius: '8px', border: '1px solid #fecaca', marginTop: '40px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#b91c1c', marginBottom: '16px' }}>Billing Setup Failed</h2>
+            <p style={{ color: '#7f1d1d', marginBottom: '24px' }}>{errorMessage}</p>
+            <p style={{ color: '#7f1d1d', fontSize: '14px' }}>Please check your Shopify store's billing settings or try again later. If you're on a development store, ensure it has billing enabled.</p>
+          </div>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }

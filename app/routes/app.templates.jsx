@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
+import { useLoaderData, useFetcher, useNavigate, useNavigation } from "@remix-run/react";
 import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
 import { getStoreSettings, updateStoreSettings } from "../models/settings.server";
@@ -48,6 +48,9 @@ export default function TemplatesPage() {
   const { activePlan, settings, templates } = useLoaderData();
   const fetcher = useFetcher();
   const navigate = useNavigate();
+  const navigation = useNavigation();
+  const isNavigating = navigation.state !== "idle";
+  const isFetching = fetcher.state !== "idle";
 
   const canUseTemplate = (tier) => {
     if (tier === "free") return true;
@@ -109,7 +112,8 @@ export default function TemplatesPage() {
                   justifyContent: 'center',
                   opacity: isUnlocked ? 1 : 0.6,
                   transition: 'opacity 0.2s ease-in-out',
-                  cursor: 'pointer'
+                  cursor: isNavigating ? 'wait' : 'pointer',
+                  pointerEvents: isNavigating ? 'none' : 'auto'
                 }} onClick={() => handlePreviewCustomize(template)}>
                   {!isUnlocked && (
                     <div style={{ background: 'rgba(0,0,0,0.6)', color: 'white', padding: '4px 12px', borderRadius: '12px' }}>
@@ -129,7 +133,7 @@ export default function TemplatesPage() {
                     <Text variant="bodySm" tone="subdued">{template.description}</Text>
                     
                     <InlineStack align="center" blockAlign="center" gap="400">
-                      <Button variant="plain" onClick={() => handlePreviewCustomize(template)}>
+                      <Button variant="plain" loading={isNavigating && navigation.location?.pathname === `/app/templates/${template.id}`} disabled={isNavigating || isFetching} onClick={() => handlePreviewCustomize(template)}>
                         {isUnlocked && template.tier !== "free" ? "Customize & Preview" : "Live Preview"}
                       </Button>
                     </InlineStack>
@@ -137,7 +141,8 @@ export default function TemplatesPage() {
                     {isUnlocked ? (
                       <Button
                         variant={isActive ? "secondary" : "primary"}
-                        disabled={isActive}
+                        disabled={isActive || isFetching || isNavigating}
+                        loading={isFetching && fetcher.formData?.get("templateId") === template.id}
                         fullWidth
                         onClick={() => handleApply(template.id)}
                       >
@@ -147,6 +152,8 @@ export default function TemplatesPage() {
                       <Button
                         variant="primary"
                         tone="success"
+                        disabled={isNavigating || isFetching}
+                        loading={isNavigating && navigation.location?.pathname === "/app/billing"}
                         fullWidth
                         onClick={() => handleUpgrade(template.tier)}
                       >

@@ -1,5 +1,5 @@
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useFetcher, useNavigate, useSubmit, Link } from "@remix-run/react";
+import { useLoaderData, useFetcher, useNavigate, useSubmit, useNavigation, Link } from "@remix-run/react";
 import { Page, Layout, Card, Text, Button, BlockStack, InlineStack, TextField, Box, Divider, Icon } from "@shopify/polaris";
 import { ArrowLeftIcon } from "@shopify/polaris-icons";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
@@ -80,6 +80,9 @@ export default function TemplateEditor() {
   const navigate = useNavigate();
   const submit = useSubmit();
   const fetcher = useFetcher();
+  const navigation = useNavigation();
+  const isNavigating = navigation.state !== "idle";
+  const isSubmitting = navigation.state === "submitting" || fetcher.state !== "idle";
 
   const [draftSettings, setDraftSettings] = useState(savedSettings);
 
@@ -99,10 +102,15 @@ export default function TemplateEditor() {
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center">
           <InlineStack blockAlign="center" gap="400">
-            <Button icon={ArrowLeftIcon} onClick={() => navigate("/app/templates")} variant="plain" />
+            <Button icon={ArrowLeftIcon} onClick={() => navigate("/app/templates")} variant="plain" disabled={isNavigating || isSubmitting} />
             <Text variant="headingLg" as="h1">Customize: {template.name}</Text>
           </InlineStack>
-          <Button variant={isUnlocked ? "primary" : "secondary"} onClick={handleSave}>
+          <Button 
+            variant={isUnlocked ? "primary" : "secondary"} 
+            onClick={handleSave}
+            loading={isNavigating && navigation.location?.pathname === "/app/billing"}
+            disabled={isSubmitting || isNavigating}
+          >
             {isUnlocked ? "Apply to Store" : "Upgrade to Apply"}
           </Button>
         </InlineStack>

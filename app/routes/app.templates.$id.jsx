@@ -430,17 +430,29 @@ export default function TemplateEditor() {
           <Button onClick={handleReset} disabled={isSaving} icon={ResetIcon}>
             Reset
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || !isUnlocked} loading={isSaving && fetcher.formData?.get("intent") === "save"}>
-            {isUnlocked ? "Save" : "🔒 Upgrade"}
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleApply}
-            disabled={isSaving || !isUnlocked}
-            loading={isSaving && fetcher.formData?.get("intent") === "apply"}
-          >
-            {isUnlocked ? "✦ Apply to Store" : "🔒 Upgrade to Apply"}
-          </Button>
+          {isUnlocked ? (
+            <Button onClick={handleSave} disabled={isSaving} loading={isSaving && fetcher.formData?.get("intent") === "save"}>
+              Save
+            </Button>
+          ) : (
+            <Button onClick={() => navigate("/app/billing")}>
+              🔒 Upgrade
+            </Button>
+          )}
+          {isUnlocked ? (
+            <Button
+              variant="primary"
+              onClick={handleApply}
+              disabled={isSaving}
+              loading={isSaving && fetcher.formData?.get("intent") === "apply"}
+            >
+              ✦ Apply to Store
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={() => navigate("/app/billing")}>
+              🔒 Upgrade to Apply
+            </Button>
+          )}
         </div>
       </div>
 

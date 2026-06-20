@@ -28,8 +28,8 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const plan = formData.get("plan");
 
-  const url = new URL(request.url);
-  const returnUrl = `${url.origin}/app/approval`;
+  const shopName = session.shop.split('.myshopify.com')[0];
+  const returnUrl = `https://admin.shopify.com/store/${shopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
   
   const isTest = true; 
 

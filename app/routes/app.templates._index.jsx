@@ -5,25 +5,17 @@ import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
 import { getStoreSettings, updateStoreSettings } from "../models/settings.server";
 import { TEMPLATES } from "../lib/templates";
 
+import prisma from "../db.server";
+
 export const loader = async ({ request }) => {
-  const { admin, session } = await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const { billing: shopifyBilling } = await authenticate.admin(request);
-  const { hasActivePayment, appSubscriptions } = await shopifyBilling.check({
-    plans: [PLAN_STARTER, PLAN_PRO],
-    isTest: true,
+  const billingRecord = await prisma.billingRecord.findUnique({
+    where: { shop }
   });
-
-  let activePlan = "Free";
-  if (hasActivePayment) {
-    if (appSubscriptions.some(sub => sub.name === PLAN_PRO)) {
-      activePlan = "Pro";
-    } else if (appSubscriptions.some(sub => sub.name === PLAN_STARTER)) {
-      activePlan = "Starter";
-    }
-  }
-
+  
+  const activePlan = billingRecord?.plan || "Free";
   const settings = await getStoreSettings(shop);
 
   return json({ activePlan, settings, templates: TEMPLATES });

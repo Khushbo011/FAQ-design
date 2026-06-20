@@ -24,7 +24,7 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  const { admin, billing, session } = await authenticate.admin(request);
+  const { admin, billing, session, redirect: shopifyRedirect } = await authenticate.admin(request);
   const formData = await request.formData();
   const plan = formData.get("plan");
 
@@ -96,7 +96,7 @@ export const action = async ({ request }) => {
 
       const confirmationUrl = data.data?.appSubscriptionCreate?.confirmationUrl;
       if (confirmationUrl) {
-        return redirect(confirmationUrl);
+        return shopifyRedirect(confirmationUrl, { target: '_parent' });
       }
     }
   } catch (error) {

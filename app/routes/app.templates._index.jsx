@@ -1,7 +1,7 @@
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate, useNavigation } from "@remix-run/react";
 import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";
-import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import { getStoreSettings, updateStoreSettings } from "../models/settings.server";
 import { TEMPLATES } from "../lib/templates";
 

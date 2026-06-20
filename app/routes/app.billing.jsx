@@ -25,11 +25,10 @@ export const loader = async ({ request }) => {
 
 export const action = async ({ request }) => {
   const { admin, billing, session, redirect: shopifyRedirect } = await authenticate.admin(request);
+  const url = new URL(request.url);
   const formData = await request.formData();
   const plan = formData.get("plan");
-
-  const shopName = session.shop.split('.myshopify.com')[0];
-  const returnUrl = `https://admin.shopify.com/store/${shopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
+  const returnUrl = `${url.origin}/app/approval?shop=${session.shop}`;
   
   const isTest = true; 
 

@@ -24,26 +24,24 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  const { billing, session } = await authenticate.admin(request);
+  const { admin, billing, session } = await authenticate.admin(request);
   const formData = await request.formData();
   const plan = formData.get("plan");
 
   const url = new URL(request.url);
   const returnUrl = `${url.origin}/app/approval`;
+  
+  const isTest = true; 
 
   try {
+    let planName, priceAmount;
+    
     if (plan === "starter") {
-      await billing.require({
-        plans: [PLAN_STARTER],
-        isTest: true,
-        onFailure: async () => billing.request({ plan: PLAN_STARTER, isTest: true, returnUrl }),
-      });
+      planName = PLAN_STARTER;
+      priceAmount = 49.0;
     } else if (plan === "pro") {
-      await billing.require({
-        plans: [PLAN_PRO],
-        isTest: true,
-        onFailure: async () => billing.request({ plan: PLAN_PRO, isTest: true, returnUrl }),
-      });
+      planName = PLAN_PRO;
+      priceAmount = 99.0;
     } else if (plan === "cancel") {
       // Attempt to cancel all active plans
       const { appSubscriptions } = await billing.check({
@@ -59,11 +57,51 @@ export const action = async ({ request }) => {
       }
       return redirect("/app/billing");
     }
-  } catch (error) {
-    if (error instanceof Response) {
-      throw error;
+
+    if (planName) {
+      const response = await admin.graphql(
+        `#graphql
+        mutation AppSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $test: Boolean!) {
+          appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test) {
+            userErrors {
+              field
+              message
+            }
+            confirmationUrl
+          }
+        }`,
+        {
+          variables: {
+            name: planName,
+            returnUrl,
+            test: isTest,
+            lineItems: [{
+              plan: {
+                appRecurringPricingDetails: {
+                  price: { amount: priceAmount, currencyCode: "USD" },
+                  interval: "EVERY_30_DAYS"
+                }
+              }
+            }]
+          },
+        }
+      );
+
+      const data = await response.json();
+      const userErrors = data.data?.appSubscriptionCreate?.userErrors;
+
+      if (userErrors && userErrors.length > 0) {
+        throw new Error(`GraphQL User Errors: ${userErrors.map(e => e.message).join(', ')}`);
+      }
+
+      const confirmationUrl = data.data?.appSubscriptionCreate?.confirmationUrl;
+      if (confirmationUrl) {
+        return redirect(confirmationUrl);
+      }
     }
-    console.error("Exact billing error:", error, error?.response?.errors, error?.message);
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    console.error("Exact billing error:", error);
     throw error;
   }
 

@@ -30,17 +30,17 @@ model Session {
 }
 
 model FAQ {
-  id          String     @id @default(cuid())
-  shop        String
-  question    String
-  answer      String     // stores rich HTML
-  categoryId  String?
-  category    Category?  @relation(fields: [categoryId], references: [id])
-  position    Int        @default(0)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  analytics   Analytics[]
+  id         String      @id @default(cuid())
+  shop       String
+  question   String
+  answer     String
+  categoryId String?
+  position   Int         @default(0)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  analytics  Analytics[]
+  category   Category?   @relation(fields: [categoryId], references: [id])
 }
 
 model Category {
@@ -48,37 +48,37 @@ model Category {
   shop      String
   name      String
   position  Int      @default(0)
-  faqs      FAQ[]
   createdAt DateTime @default(now())
+  faqs      FAQ[]
 }
 
 model Analytics {
   id        String   @id @default(cuid())
   shop      String
   faqId     String
-  faq       FAQ      @relation(fields: [faqId], references: [id], onDelete: Cascade)
-  event     String   // "view" | "expand" | "helpful" | "not_helpful"
-  page      String?  // URL where event occurred
+  event     String
+  page      String?
   createdAt DateTime @default(now())
+  faq       FAQ      @relation(fields: [faqId], references: [id], onDelete: Cascade)
 }
 
 model BillingRecord {
-  id                String   @id @default(cuid())
-  shop              String   @unique
-  plan              String   // "free" | "basic" | "pro"
-  chargeId          String?
-  status            String   @default("active")
-  trialEndsAt       DateTime?
-  currentPeriodEnd  DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String    @id @default(cuid())
+  shop             String    @unique
+  plan             String
+  chargeId         String?
+  status           String    @default("active")
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model StoreSettings {
   id               String   @id @default(cuid())
   shop             String   @unique
   activeTemplate   String   @default("classic")
-  templateSettings String   @default("{}") // JSON string for colors, typography, etc.
+  templateSettings String   @default("{}")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

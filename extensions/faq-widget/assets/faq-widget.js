@@ -4,28 +4,48 @@ document.addEventListener("DOMContentLoaded", function () {
   containers.forEach((container) => {
     const shop = container.dataset.shop;
     const category = container.dataset.category;
-    const style = container.dataset.style;
+    const styleOverride = container.dataset.style;
     const searchEnabled = container.dataset.search === "true";
     const votesEnabled = container.dataset.votes === "true";
     const contentArea = container.querySelector(".faqify-content-area");
     const searchInput = container.querySelector(".faqify-search-input");
 
+    if (!contentArea) return;
+
     let allFaqs = [];
+    let currentFaqs = [];
+    let activePlan = "Free";
+    let activeTemplate = "classic";
+    let customizedSettings = {};
+    let allTemplatesList = [];
+    let selectedTemplateId = "classic";
+    let selectedCategory = "all";
 
     // Fetch FAQs and settings from the public API
     const apiUrl = `/apps/faqify/api/public/faqs?shop=${shop}&category=${category}`;
 
     fetch(apiUrl)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP error " + res.status);
+        return res.json();
+      })
       .then((data) => {
         allFaqs = data.faqs || [];
+        currentFaqs = [...allFaqs];
+        activePlan = data.activePlan || "Free";
+        activeTemplate = data.activeTemplate || "classic";
+        selectedTemplateId = activeTemplate;
+        customizedSettings = data.templateSettings || {};
+        allTemplatesList = data.allTemplates || [];
 
-        // Apply saved template settings as CSS custom properties
-        if (data.templateSettings) {
-          applySettings(container, data.templateSettings);
-        }
+        // Apply saved template settings initially
+        applySettings(container, selectedTemplateId, customizedSettings);
 
-        renderFaqs(allFaqs);
+        // Render storefront switcher dropdown
+        renderSwitcher();
+
+        // Render FAQs
+        renderFaqs(currentFaqs, selectedTemplateId);
       })
       .catch((err) => {
         console.error("FAQify Error:", err);
@@ -33,26 +53,106 @@ document.addEventListener("DOMContentLoaded", function () {
         allFaqs = [
           { id: "1", question: "How does shipping work?", answer: "We ship within 2-3 business days.", categoryName: "Shipping" },
           { id: "2", question: "What is your return policy?", answer: "Returns accepted within 30 days.", categoryName: "Returns" },
+          { id: "3", question: "Do you offer international delivery?", answer: "Yes, we ship to over 100 countries worldwide.", categoryName: "Shipping" },
+          { id: "4", question: "How do I edit my store name?", answer: "Go to store settings in your dashboard to modify details.", categoryName: "General" }
         ];
-        renderFaqs(allFaqs);
+        currentFaqs = [...allFaqs];
+        selectedTemplateId = "classic";
+        renderFaqs(currentFaqs, selectedTemplateId);
       });
 
     if (searchInput) {
       searchInput.addEventListener("keyup", (e) => {
         const query = e.target.value.toLowerCase();
-        const filtered = allFaqs.filter((faq) =>
+        let filtered = allFaqs.filter((faq) =>
           faq.question.toLowerCase().includes(query) || 
           faq.answer.toLowerCase().includes(query)
         );
-        renderFaqs(filtered);
+        if (selectedTemplateId === "split" && selectedCategory !== "all") {
+          filtered = filtered.filter(f => f.categoryName === selectedCategory);
+        }
+        currentFaqs = filtered;
+        renderFaqs(currentFaqs, selectedTemplateId);
       });
+    }
+
+    /**
+     * Render the template switcher dropdown
+     */
+    function renderSwitcher() {
+      // Remove any existing switcher
+      const existing = container.querySelector(".faqify-storefront-switcher");
+      if (existing) existing.remove();
+
+      if (!allTemplatesList || allTemplatesList.length === 0) return;
+
+      const switcherDiv = document.createElement("div");
+      switcherDiv.className = "faqify-storefront-switcher";
+
+      let optionsHtml = "";
+      allTemplatesList.forEach((t) => {
+        const isUnlocked = canUseTemplate(t.tier, activePlan);
+        const lockText = isUnlocked ? "" : ` 🔒 (Upgrade to ${t.tier === "starter" ? "Starter" : "Pro"})`;
+        optionsHtml += `<option value="${t.id}" ${t.id === selectedTemplateId ? "selected" : ""} ${!isUnlocked ? "disabled" : ""}>${t.name}${lockText}</option>`;
+      });
+
+      switcherDiv.innerHTML = `
+        <label for="faqify-template-select" class="faqify-switcher-label">Choose Layout:</label>
+        <select id="faqify-template-select" class="faqify-template-select">
+          ${optionsHtml}
+        </select>
+      `;
+
+      // Insert switcher right after title, or at top
+      const title = container.querySelector(".faqify-title");
+      if (title) {
+        title.parentNode.insertBefore(switcherDiv, title.nextSibling);
+      } else {
+        container.insertBefore(switcherDiv, container.firstChild);
+      }
+
+      // Add change listener
+      const select = switcherDiv.querySelector(".faqify-template-select");
+      if (select) {
+        select.addEventListener("change", (e) => {
+          const newTemplateId = e.target.value;
+          selectedTemplateId = newTemplateId;
+          
+          // Determine which settings to apply
+          let targetSettings = {};
+          if (newTemplateId === activeTemplate) {
+            // Apply custom saved settings
+            targetSettings = customizedSettings;
+          } else {
+            // Apply default settings for this template
+            const match = allTemplatesList.find(t => t.id === newTemplateId);
+            targetSettings = match ? match.defaultSettings : {};
+          }
+
+          // Apply settings and re-render
+          applySettings(container, newTemplateId, targetSettings);
+          selectedCategory = "all"; // Reset category filter for split layouts
+          renderFaqs(allFaqs, newTemplateId);
+          if (searchInput) searchInput.value = ""; // Clear search
+        });
+      }
+    }
+
+    function canUseTemplate(tier, plan) {
+      if (tier === "free") return true;
+      if (tier === "starter" && (plan === "Starter" || plan === "Pro")) return true;
+      if (tier === "pro" && plan === "Pro") return true;
+      return false;
     }
 
     /**
      * Apply saved template settings as CSS custom properties on the container.
      */
-    function applySettings(el, settings) {
+    function applySettings(el, templateId, settings) {
       const s = settings;
+
+      // Set template name as data-attribute for styling overrides
+      el.setAttribute("data-active-template", templateId);
 
       // Colors
       if (s.primaryColor) el.style.setProperty("--faqify-primary", s.primaryColor);
@@ -112,6 +212,8 @@ document.addEventListener("DOMContentLoaded", function () {
             break;
           default:
             el.style.setProperty("--faqify-hover-transform", "none");
+            el.style.setProperty("--faqify-hover-shadow", "none");
+            el.style.setProperty("--faqify-hover-border", "transparent");
         }
       }
 
@@ -120,81 +222,96 @@ document.addEventListener("DOMContentLoaded", function () {
       if (s.iconStyle) {
         const rotateMap = { chevron: "90deg", plus: "0deg", arrow: "180deg" };
         el.style.setProperty("--faqify-icon-rotate", rotateMap[s.iconStyle] || "90deg");
+        el.setAttribute("data-icon-style", s.iconStyle);
       }
     }
 
     function getIconChar(iconStyle, isOpen) {
-      const storedStyle = container.style.getPropertyValue("--faqify-icon-style") || iconStyle || "chevron";
-      switch (storedStyle) {
+      const activeStyle = container.getAttribute("data-icon-style") || iconStyle || "chevron";
+      switch (activeStyle) {
         case "plus": return isOpen ? "−" : "+";
         case "arrow": return "↓";
         default: return "›";
       }
     }
 
-    function renderFaqs(faqs) {
+    function renderFaqs(faqs, templateId) {
       if (faqs.length === 0) {
-        contentArea.innerHTML = '<p style="text-align:center;padding:20px;opacity:0.5;">No FAQs found.</p>';
+        contentArea.innerHTML = '<p style="text-align:center;padding:40px;opacity:0.5;">No FAQs found matching your criteria.</p>';
         return;
       }
 
-      if (style === "accordion" || style === undefined) {
-        contentArea.innerHTML = faqs
-          .map(
-            (faq) => `
-          <div class="faqify-accordion-item" data-id="${faq.id}">
-            <button class="faqify-accordion-header">
-              ${faq.question}
-              <span class="faqify-icon">${getIconChar(null, false)}</span>
-            </button>
-            <div class="faqify-accordion-content">
-              <div class="faqify-answer-inner">${faq.answer}</div>
-              ${votesEnabled ? renderVotes(faq.id) : ""}
-            </div>
+      // ─── Grid / Masonry Layouts ───
+      if (templateId === "grid" || templateId === "masonry") {
+        const isMasonry = templateId === "masonry";
+        contentArea.innerHTML = `
+          <div class="faqify-grid ${isMasonry ? "faqify-masonry" : ""}">
+            ${faqs.map(
+              (faq) => `
+              <div class="faqify-grid-card">
+                <h3>${faq.question}</h3>
+                <div class="faqify-answer">${faq.answer}</div>
+                ${votesEnabled ? renderVotes(faq.id) : ""}
+              </div>
+            `
+            ).join("")}
           </div>
-        `
-          )
-          .join("");
+        `;
+      } 
+      // ─── Split Categories sidebar Layout ───
+      else if (templateId === "split") {
+        // Collect categories
+        const categories = ["all"];
+        faqs.forEach(f => {
+          if (f.categoryName && !categories.includes(f.categoryName)) {
+            categories.push(f.categoryName);
+          }
+        });
 
-        // Add accordion listeners
-        contentArea.querySelectorAll(".faqify-accordion-header").forEach((btn) => {
-          btn.addEventListener("click", function () {
-            const item = this.parentElement;
-            const content = this.nextElementSibling;
-            const isOpen = item.classList.contains("active");
+        // Filter FAQs by selected category
+        const filteredFaqs = selectedCategory === "all" 
+          ? faqs 
+          : faqs.filter(f => f.categoryName === selectedCategory);
 
-            // Close all
-            contentArea.querySelectorAll(".faqify-accordion-item").forEach((i) => {
-              i.classList.remove("active");
-              i.querySelector(".faqify-accordion-content").style.maxHeight = null;
-              i.querySelector(".faqify-icon").textContent = getIconChar(null, false);
-            });
+        let sidebarHtml = `<ul class="faqify-split-sidebar">`;
+        categories.forEach(cat => {
+          const label = cat === "all" ? "All Categories" : cat;
+          sidebarHtml += `
+            <li class="faqify-sidebar-item ${cat === selectedCategory ? "active" : ""}" data-category="${cat}">
+              ${label}
+            </li>
+          `;
+        });
+        sidebarHtml += `</ul>`;
 
-            if (!isOpen) {
-              item.classList.add("active");
-              content.style.maxHeight = content.scrollHeight + "px";
-              this.querySelector(".faqify-icon").textContent = getIconChar(null, true);
-              trackEvent(item.dataset.id, "expand");
-            }
+        const faqContentHtml = `
+          <div class="faqify-split-content">
+            ${renderAccordionItems(filteredFaqs)}
+          </div>
+        `;
+
+        contentArea.innerHTML = `
+          <div class="faqify-split-layout">
+            ${sidebarHtml}
+            ${faqContentHtml}
+          </div>
+        `;
+
+        // Bind sidebar item click events
+        contentArea.querySelectorAll(".faqify-sidebar-item").forEach(item => {
+          item.addEventListener("click", function () {
+            selectedCategory = this.dataset.category;
+            renderFaqs(faqs, "split");
           });
         });
-      } else if (style === "grid") {
-        contentArea.innerHTML =
-          '<div class="faqify-grid">' +
-          faqs
-            .map(
-              (faq) => `
-            <div class="faqify-grid-card">
-              <h3>${faq.question}</h3>
-              <div>${faq.answer}</div>
-              ${votesEnabled ? renderVotes(faq.id) : ""}
-            </div>
-          `
-            )
-            .join("") +
-          "</div>";
-      } else {
-        contentArea.innerHTML = '<p style="text-align:center;padding:20px;opacity:0.5;">Display style not supported yet.</p>';
+
+        // Add accordion listeners to the split content accordions
+        bindAccordionListeners();
+      } 
+      // ─── Accordion layouts (classic, card, dark) ───
+      else {
+        contentArea.innerHTML = renderAccordionItems(faqs);
+        bindAccordionListeners();
       }
 
       // Track view events
@@ -213,6 +330,49 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
+    function renderAccordionItems(faqs) {
+      return faqs
+        .map(
+          (faq) => `
+        <div class="faqify-accordion-item" data-id="${faq.id}">
+          <button class="faqify-accordion-header">
+            ${faq.question}
+            <span class="faqify-icon">${getIconChar(null, false)}</span>
+          </button>
+          <div class="faqify-accordion-content">
+            <div class="faqify-answer-inner">${faq.answer}</div>
+            ${votesEnabled ? renderVotes(faq.id) : ""}
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    }
+
+    function bindAccordionListeners() {
+      contentArea.querySelectorAll(".faqify-accordion-header").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const item = this.parentElement;
+          const content = this.nextElementSibling;
+          const isOpen = item.classList.contains("active");
+
+          // Close all accordions inside the contentArea
+          contentArea.querySelectorAll(".faqify-accordion-item").forEach((i) => {
+            i.classList.remove("active");
+            i.querySelector(".faqify-accordion-content").style.maxHeight = null;
+            i.querySelector(".faqify-icon").textContent = getIconChar(null, false);
+          });
+
+          if (!isOpen) {
+            item.classList.add("active");
+            content.style.maxHeight = content.scrollHeight + "px";
+            this.querySelector(".faqify-icon").textContent = getIconChar(null, true);
+            trackEvent(item.dataset.id, "expand");
+          }
+        });
+      });
+    }
+
     function renderVotes(faqId) {
       return `
         <div class="faqify-votes">
@@ -224,12 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function trackEvent(faqId, event) {
-      // Uncomment when analytics API is ready:
-      // fetch(`/apps/faqify/api/analytics`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ shop, faqId, event, page: window.location.pathname })
-      // }).catch(() => {});
+      // API call placeholder for analytics
     }
   });
 });

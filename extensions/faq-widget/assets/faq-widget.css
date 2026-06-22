@@ -187,6 +187,118 @@
   font-size: 14px;
 }
 
+/* ─── Storefront Switcher ─── */
+.faqify-storefront-switcher {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+  background: var(--faqify-card-bg, #f9fafb);
+  padding: 12px 20px;
+  border-radius: var(--faqify-radius, 8px);
+  border: 1px solid var(--faqify-border, #e5e7eb);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.faqify-switcher-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--faqify-text, #374151);
+}
+
+.faqify-template-select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid var(--faqify-border, #d1d5db);
+  background-color: var(--faqify-card-bg, #fff);
+  color: var(--faqify-text, #374151);
+  outline: none;
+  cursor: pointer;
+  min-width: 200px;
+  transition: border-color 0.15s ease;
+}
+
+.faqify-template-select:focus {
+  border-color: var(--faqify-primary, #6366f1);
+}
+
+/* ─── Split Categories Layout ─── */
+.faqify-split-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.faqify-split-sidebar {
+  width: 220px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.faqify-sidebar-item {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--faqify-radius, 6px);
+  cursor: pointer;
+  color: var(--faqify-text, #4b5563);
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.faqify-sidebar-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--faqify-primary, #111827);
+}
+
+.faqify-sidebar-item.active {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--faqify-primary, #111827);
+  border-left-color: var(--faqify-primary, #6366f1);
+  font-weight: 600;
+}
+
+.faqify-split-content {
+  flex-grow: 1;
+}
+
+/* ─── Masonry / 3-Column Grid ─── */
+.faqify-grid.faqify-masonry {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+@media (max-width: 768px) {
+  .faqify-split-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .faqify-split-sidebar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .faqify-sidebar-item {
+    margin-bottom: 0;
+    padding: 8px 12px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    background: rgba(0, 0, 0, 0.02);
+  }
+  .faqify-sidebar-item.active {
+    border-bottom-color: var(--faqify-primary, #6366f1);
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
 /* ─── Dark mode fallback ─── */
 @media (prefers-color-scheme: dark) {
   .faqify-accordion-item:not([style]) {

@@ -1,5 +1,6 @@
 import { json } from "@remix-run/node";
 import db from "../db.server";
+import { TEMPLATES } from "../lib/templates";
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
@@ -26,6 +27,11 @@ export const loader = async ({ request }) => {
       where: { shop },
     }) || { activeTemplate: "classic", templateSettings: "{}" };
 
+    const billingRecord = await db.billingRecord.findUnique({
+      where: { shop },
+    });
+    const activePlan = billingRecord ? billingRecord.plan : "Free";
+
     const formattedFaqs = faqs.map(faq => ({
       id: faq.id,
       question: faq.question,
@@ -42,10 +48,13 @@ export const loader = async ({ request }) => {
 
     return json({
       faqs: formattedFaqs,
+      activePlan,
       activeTemplate: settings.activeTemplate,
-      templateSettings: JSON.parse(settings.templateSettings || "{}")
+      templateSettings: JSON.parse(settings.templateSettings || "{}"),
+      allTemplates: TEMPLATES
     }, { headers });
   } catch (error) {
+    console.error("Public FAQs loader error:", error);
     return json({ error: "Server error" }, { status: 500 });
   }
 };

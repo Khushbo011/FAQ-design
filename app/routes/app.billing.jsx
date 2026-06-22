@@ -28,7 +28,10 @@ export const action = async ({ request }) => {
   const url = new URL(request.url);
   const formData = await request.formData();
   const plan = formData.get("plan");
-  const returnUrl = `${url.origin}/app/approval?shop=${session.shop}`;
+  
+  // Return URL must go through Shopify admin to preserve the embedded app session
+  const shopName = session.shop.replace('.myshopify.com', '');
+  const returnUrl = `https://admin.shopify.com/store/${shopName}/apps/${process.env.SHOPIFY_API_KEY}/app/approval`;
   
   const isTest = true; 
 

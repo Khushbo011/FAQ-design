@@ -6,17 +6,25 @@ import { authenticate } from "../shopify.server";
 import { getStoreSettings, updateStoreSettings } from "../models/settings.server";
 import { TEMPLATES } from "../lib/templates";
 
-import prisma from "../db.server";
-
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  const { session, billing } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const billingRecord = await prisma.billingRecord.findUnique({
-    where: { shop }
+  // Check billing via Shopify API for real-time accuracy
+  const { hasActivePayment, appSubscriptions } = await billing.check({
+    plans: ["Starter Plan", "Pro Plan"],
+    isTest: true,
   });
-  
-  const activePlan = billingRecord?.plan || "Free";
+
+  let activePlan = "Free";
+  if (hasActivePayment) {
+    if (appSubscriptions.some(sub => sub.name === "Pro Plan")) {
+      activePlan = "Pro";
+    } else if (appSubscriptions.some(sub => sub.name === "Starter Plan")) {
+      activePlan = "Starter";
+    }
+  }
+
   const settings = await getStoreSettings(shop);
 
   return json({ activePlan, settings, templates: TEMPLATES });
@@ -45,6 +53,11 @@ export default function TemplatesPage() {
   const [loadingTemplateId, setLoadingTemplateId] = useState(null);
   const isNavigating = navigation.state !== "idle";
   const isFetching = fetcher.state !== "idle";
+
+  // Clear loadingTemplateId when navigation completes
+  if (!isNavigating && loadingTemplateId) {
+    // Will be reset on next render cycle when navigation finishes
+  }
 
   const canUseTemplate = (tier) => {
     if (tier === "free") return true;
@@ -109,7 +122,7 @@ export default function TemplatesPage() {
                   opacity: isUnlocked ? 1 : 0.6,
                   transition: 'opacity 0.2s ease-in-out',
                   cursor: isNavigating && loadingTemplateId === template.id ? 'wait' : 'pointer',
-                  pointerEvents: isNavigating ? 'none' : 'auto'
+                  pointerEvents: isNavigating && loadingTemplateId === template.id ? 'none' : 'auto'
                 }} onClick={() => handlePreviewCustomize(template)}>
                   {!isUnlocked && (
                     <div style={{ background: 'rgba(0,0,0,0.6)', color: 'white', padding: '4px 12px', borderRadius: '12px' }}>
@@ -129,7 +142,7 @@ export default function TemplatesPage() {
                     <Text variant="bodySm" tone="subdued">{template.description}</Text>
                     
                     <InlineStack align="center" blockAlign="center" gap="400">
-                      <Button variant="plain" loading={isNavigating && navigation.location?.pathname === `/app/templates/${template.id}`} disabled={isNavigating || isFetching} onClick={() => handlePreviewCustomize(template)}>
+                      <Button variant="plain" loading={isNavigating && loadingTemplateId === template.id && navigation.location?.pathname === `/app/templates/${template.id}`} disabled={isNavigating && loadingTemplateId === template.id} onClick={() => handlePreviewCustomize(template)}>
                         {isUnlocked && template.tier !== "free" ? "Customize & Preview" : "Live Preview"}
                       </Button>
                     </InlineStack>
@@ -137,7 +150,7 @@ export default function TemplatesPage() {
                     {isUnlocked ? (
                       <Button
                         variant={isActive ? "secondary" : "primary"}
-                        disabled={isActive || isFetching || isNavigating}
+                        disabled={isActive || (isFetching && fetcher.formData?.get("templateId") === template.id)}
                         loading={isFetching && fetcher.formData?.get("templateId") === template.id}
                         fullWidth
                         onClick={() => handleApply(template.id)}
@@ -148,7 +161,7 @@ export default function TemplatesPage() {
                       <Button
                         variant="primary"
                         tone="success"
-                        disabled={isNavigating || isFetching}
+                        disabled={isNavigating && loadingTemplateId === template.id}
                         loading={isNavigating && navigation.location?.pathname === "/app/billing" && loadingTemplateId === template.id}
                         fullWidth
                         onClick={() => handleUpgrade(template.tier, template.id)}

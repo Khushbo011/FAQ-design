@@ -1,5 +1,5 @@
 import React from "react";
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useRouteError } from "@remix-run/react";
 import { Page, Layout, Badge } from "@shopify/polaris";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
@@ -54,7 +54,7 @@ export const action = async ({ request }) => {
           prorate: true,
         });
       }
-      return redirect("/app/billing");
+      return shopifyRedirect("/app/billing");
     }
 
     if (planName) {

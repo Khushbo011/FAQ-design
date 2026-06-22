@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate, useNavigation } from "@remix-run/react";
 import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";
@@ -41,6 +42,7 @@ export default function TemplatesPage() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const navigation = useNavigation();
+  const [loadingTemplateId, setLoadingTemplateId] = useState(null);
   const isNavigating = navigation.state !== "idle";
   const isFetching = fetcher.state !== "idle";
 
@@ -56,11 +58,13 @@ export default function TemplatesPage() {
     shopify.toast.show("Template Applied Successfully");
   };
 
-  const handleUpgrade = (tier) => {
+  const handleUpgrade = (tier, templateId) => {
+    setLoadingTemplateId(templateId);
     navigate("/app/billing");
   };
 
   const handlePreviewCustomize = (template) => {
+    setLoadingTemplateId(template.id);
     navigate(`/app/templates/${template.id}`);
   };
 
@@ -104,7 +108,7 @@ export default function TemplatesPage() {
                   justifyContent: 'center',
                   opacity: isUnlocked ? 1 : 0.6,
                   transition: 'opacity 0.2s ease-in-out',
-                  cursor: isNavigating ? 'wait' : 'pointer',
+                  cursor: isNavigating && loadingTemplateId === template.id ? 'wait' : 'pointer',
                   pointerEvents: isNavigating ? 'none' : 'auto'
                 }} onClick={() => handlePreviewCustomize(template)}>
                   {!isUnlocked && (
@@ -145,9 +149,9 @@ export default function TemplatesPage() {
                         variant="primary"
                         tone="success"
                         disabled={isNavigating || isFetching}
-                        loading={isNavigating && navigation.location?.pathname === "/app/billing"}
+                        loading={isNavigating && navigation.location?.pathname === "/app/billing" && loadingTemplateId === template.id}
                         fullWidth
-                        onClick={() => handleUpgrade(template.tier)}
+                        onClick={() => handleUpgrade(template.tier, template.id)}
                       >
                         Upgrade to {template.tier === "starter" ? "Starter" : "Pro"}
                       </Button>

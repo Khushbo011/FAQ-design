@@ -1,10 +1,9 @@
-import { redirect } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
 
 export const loader = async ({ request }) => {
-  const { billing, session } = await authenticate.admin(request);
-  
+  const { billing, session, redirect } = await authenticate.admin(request);
+
   const { hasActivePayment, appSubscriptions } = await billing.check({
     plans: [PLAN_STARTER, PLAN_PRO],
     isTest: true,

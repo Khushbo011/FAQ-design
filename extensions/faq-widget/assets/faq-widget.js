@@ -1,7 +1,11 @@
-document.addEventListener("DOMContentLoaded", function () {
+function initFaqifyWidgets() {
   const containers = document.querySelectorAll(".faqify-widget-container");
 
   containers.forEach((container) => {
+    // Prevent double-initialization
+    if (container.classList.contains("faqify-initialized")) return;
+    container.classList.add("faqify-initialized");
+
     const shop = container.dataset.shop;
     const category = container.dataset.category;
     const styleOverride = container.dataset.style;
@@ -387,4 +391,20 @@ document.addEventListener("DOMContentLoaded", function () {
       // API call placeholder for analytics
     }
   });
+}
+
+// Initialize immediately, on DOM load, or on Shopify customizer section load
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initFaqifyWidgets);
+} else {
+  initFaqifyWidgets();
+}
+
+// Watch for Shopify Section Loader events in the customizer
+document.addEventListener("shopify:section:load", function (event) {
+  if (event.target.querySelector(".faqify-widget-container")) {
+    // If the loaded section is our FAQ widget, re-run initialization
+    initFaqifyWidgets();
+  }
 });
+

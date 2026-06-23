@@ -35,7 +35,28 @@ function initFaqifyWidgets() {
     ];
 
     const getDatasetSettings = () => {
-      return {};
+      const d = container.dataset;
+      const settings = {};
+      if (d.primaryColor) settings.primaryColor = d.primaryColor;
+      if (d.secondaryColor) settings.secondaryColor = d.secondaryColor;
+      if (d.backgroundColor) settings.backgroundColor = d.backgroundColor;
+      if (d.textColor) settings.textColor = d.textColor;
+      if (d.cardBackground) settings.cardBackground = d.cardBackground;
+      if (d.borderColor) settings.borderColor = d.borderColor;
+      if (d.fontFamily) settings.fontFamily = d.fontFamily;
+      if (d.headingFontSize) settings.headingFontSize = d.headingFontSize;
+      if (d.bodyFontSize) settings.bodyFontSize = d.bodyFontSize;
+      if (d.questionFontWeight) settings.questionFontWeight = d.questionFontWeight;
+      if (d.borderRadius) settings.borderRadius = d.borderRadius;
+      if (d.cardPadding) settings.cardPadding = d.cardPadding;
+      if (d.itemSpacing) settings.itemSpacing = d.itemSpacing;
+      if (d.containerMaxWidth) settings.containerMaxWidth = d.containerMaxWidth;
+      if (d.cardShadow) settings.cardShadow = d.cardShadow;
+      if (d.cardBorderWidth) settings.cardBorderWidth = d.cardBorderWidth;
+      if (d.cardHoverEffect) settings.cardHoverEffect = d.cardHoverEffect;
+      if (d.iconStyle) settings.iconStyle = d.iconStyle;
+      if (d.iconColor) settings.iconColor = d.iconColor;
+      return settings;
     };
 
     // Fetch FAQs and settings from the public API
@@ -59,18 +80,26 @@ function initFaqifyWidgets() {
         currentFaqs = [...allFaqs];
         activePlan = data.activePlan || "Free";
         activeTemplate = data.activeTemplate || "classic";
-        selectedTemplateId = activeTemplate;
+        selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : activeTemplate;
         customizedSettings = data.templateSettings || {};
         allTemplatesList = data.allTemplates || [];
 
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
         
-        // Strictly use App Dashboard settings and active template
-        let targetSettings = {
-          ...defaultSettings,
-          ...(customizedSettings[selectedTemplateId] || {})
-        };
+        let targetSettings;
+        if (styleOverride === "app") {
+          targetSettings = {
+            ...defaultSettings,
+            ...(customizedSettings[selectedTemplateId] || {})
+          };
+        } else {
+          targetSettings = {
+            ...defaultSettings,
+            ...(customizedSettings[selectedTemplateId] || {}),
+            ...getDatasetSettings()
+          };
+        }
 
         // Apply saved template settings initially
         applySettings(container, selectedTemplateId, targetSettings);
@@ -90,12 +119,20 @@ function initFaqifyWidgets() {
         currentFaqs = [...allFaqs];
         activePlan = "Free"; // Assume Free on failure
         allTemplatesList = FALLBACK_TEMPLATES;
-        selectedTemplateId = "classic";
+        selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : "classic";
         
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
 
-        let targetSettings = defaultSettings;
+        let targetSettings;
+        if (styleOverride === "app") {
+          targetSettings = defaultSettings;
+        } else {
+          targetSettings = {
+            ...defaultSettings,
+            ...getDatasetSettings()
+          };
+        }
         
         applySettings(container, selectedTemplateId, targetSettings);
         renderFaqs(currentFaqs, selectedTemplateId);
@@ -162,7 +199,8 @@ function initFaqifyWidgets() {
           const defaultSettings = match ? match.defaultSettings : {};
           let targetSettings = {
             ...defaultSettings,
-            ...(customizedSettings[newTemplateId] || {})
+            ...(customizedSettings[newTemplateId] || {}),
+            ...getDatasetSettings()
           };
 
           // Apply settings and re-render

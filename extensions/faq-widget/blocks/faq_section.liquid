@@ -5,13 +5,30 @@
      data-shop="{{ shop.permanent_domain }}" 
      data-category="{{ section.settings.category_filter }}"
      data-style="{{ section.settings.display_style }}"
-     data-accent="{{ section.settings.accent_color }}"
-     data-radius="{{ section.settings.border_radius }}"
      data-search="{{ section.settings.show_search }}"
-     data-votes="{{ section.settings.show_helpful_votes }}">
+     data-votes="{{ section.settings.show_helpful_votes }}"
+     data-primary-color="{{ section.settings.primary_color }}"
+     data-secondary-color="{{ section.settings.secondary_color }}"
+     data-background-color="{{ section.settings.background_color }}"
+     data-text-color="{{ section.settings.text_color }}"
+     data-card-background="{{ section.settings.card_background }}"
+     data-border-color="{{ section.settings.border_color }}"
+     data-font-family="{{ section.settings.font_family }}"
+     data-heading-font-size="{{ section.settings.heading_font_size }}"
+     data-body-font-size="{{ section.settings.body_font_size }}"
+     data-question-font-weight="{{ section.settings.question_font_weight }}"
+     data-border-radius="{{ section.settings.border_radius }}"
+     data-card-padding="{{ section.settings.card_padding }}"
+     data-item-spacing="{{ section.settings.item_spacing }}"
+     data-container-max-width="{{ section.settings.container_max_width }}"
+     data-card-shadow="{{ section.settings.card_shadow }}"
+     data-card-border-width="{{ section.settings.card_border_width }}"
+     data-card-hover-effect="{{ section.settings.card_hover_effect }}"
+     data-icon-style="{{ section.settings.icon_style }}"
+     data-icon-color="{{ section.settings.icon_color }}">
   
   {% if section.settings.title != blank %}
-    <h2 class="faqify-title" style="color: {{ section.settings.accent_color }}">{{ section.settings.title }}</h2>
+    <h2 class="faqify-title" style="color: {{ section.settings.primary_color }}">{{ section.settings.title }}</h2>
   {% endif %}
 
   {% if section.settings.show_search %}
@@ -20,7 +37,7 @@
     </div>
   {% endif %}
 
-  <div class="faqify-content-area" style="--faqify-radius: {{ section.settings.border_radius }}px; --faqify-accent: {{ section.settings.accent_color }};">
+  <div class="faqify-content-area" style="--faqify-radius: {{ section.settings.border_radius }}px; --faqify-primary: {{ section.settings.primary_color }};">
     <!-- FAQs will be dynamically rendered here by JS -->
     <div class="faqify-loading">Loading FAQs...</div>
   </div>
@@ -50,8 +67,53 @@
     { "type": "select", "id": "category_filter", "label": "Show Category", "options": [{"value": "all", "label": "All Categories"}], "default": "all" },
     { "type": "checkbox", "id": "show_search", "label": "Show Search Bar", "default": true },
     { "type": "checkbox", "id": "show_helpful_votes", "label": "Show Helpful/Not Helpful Buttons", "default": true },
-    { "type": "color", "id": "accent_color", "label": "Accent Color", "default": "#000000" },
-    { "type": "range", "id": "border_radius", "label": "Border Radius", "min": 0, "max": 20, "step": 1, "default": 8 },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "primary_color", "label": "Primary Color", "default": "#1a1a2e" },
+    { "type": "color", "id": "secondary_color", "label": "Secondary Color", "default": "#16213e" },
+    { "type": "color", "id": "background_color", "label": "Background Color", "default": "#ffffff" },
+    { "type": "color", "id": "text_color", "label": "Text Color", "default": "#333333" },
+    { "type": "color", "id": "card_background", "label": "Card Background", "default": "#ffffff" },
+    { "type": "color", "id": "border_color", "label": "Border Color", "default": "#e5e7eb" },
+    { "type": "color", "id": "icon_color", "label": "Icon Color", "default": "#6b7280" },
+    { "type": "header", "content": "Typography" },
+    { "type": "select", "id": "font_family", "label": "Font Family", "options": [
+      {"value": "Inter", "label": "Inter"},
+      {"value": "Roboto", "label": "Roboto"},
+      {"value": "Outfit", "label": "Outfit"},
+      {"value": "Poppins", "label": "Poppins"}
+    ], "default": "Inter" },
+    { "type": "range", "id": "heading_font_size", "label": "Heading Font Size", "min": 16, "max": 40, "step": 1, "default": 24 },
+    { "type": "range", "id": "body_font_size", "label": "Body Font Size", "min": 12, "max": 24, "step": 1, "default": 15 },
+    { "type": "select", "id": "question_font_weight", "label": "Question Font Weight", "options": [
+      {"value": "400", "label": "Normal"},
+      {"value": "500", "label": "Medium"},
+      {"value": "600", "label": "Semibold"},
+      {"value": "700", "label": "Bold"}
+    ], "default": "600" },
+    { "type": "header", "content": "Layout & Sizing" },
+    { "type": "range", "id": "border_radius", "label": "Border Radius", "min": 0, "max": 40, "step": 1, "default": 6 },
+    { "type": "range", "id": "card_padding", "label": "Card Padding", "min": 10, "max": 40, "step": 1, "default": 20 },
+    { "type": "range", "id": "item_spacing", "label": "Item Spacing", "min": 0, "max": 40, "step": 1, "default": 12 },
+    { "type": "range", "id": "container_max_width", "label": "Container Max Width", "min": 400, "max": 1200, "step": 10, "default": 800 },
+    { "type": "header", "content": "Card Styles" },
+    { "type": "select", "id": "card_shadow", "label": "Card Shadow", "options": [
+      {"value": "none", "label": "None"},
+      {"value": "sm", "label": "Small"},
+      {"value": "md", "label": "Medium"},
+      {"value": "lg", "label": "Large"}
+    ], "default": "sm" },
+    { "type": "range", "id": "card_border_width", "label": "Card Border Width", "min": 0, "max": 5, "step": 1, "default": 1 },
+    { "type": "select", "id": "card_hover_effect", "label": "Card Hover Effect", "options": [
+      {"value": "none", "label": "None"},
+      {"value": "lift", "label": "Lift Up"},
+      {"value": "glow", "label": "Glow"},
+      {"value": "border", "label": "Highlight Border"}
+    ], "default": "lift" },
+    { "type": "select", "id": "icon_style", "label": "Icon Style", "options": [
+      {"value": "chevron", "label": "Chevron"},
+      {"value": "plus", "label": "Plus / Minus"},
+      {"value": "arrow", "label": "Arrow"}
+    ], "default": "chevron" },
     { "type": "checkbox", "id": "show_branding", "label": "Show Powered by FAQify", "default": true }
   ]
 }

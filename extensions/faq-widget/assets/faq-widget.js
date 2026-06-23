@@ -25,6 +25,31 @@ function initFaqifyWidgets() {
     let selectedTemplateId = "classic";
     let selectedCategory = "all";
 
+    const getDatasetSettings = () => {
+      const d = container.dataset;
+      return {
+        primaryColor: d.primaryColor,
+        secondaryColor: d.secondaryColor,
+        backgroundColor: d.backgroundColor,
+        textColor: d.textColor,
+        cardBackground: d.cardBackground,
+        borderColor: d.borderColor,
+        fontFamily: d.fontFamily,
+        headingFontSize: d.headingFontSize,
+        bodyFontSize: d.bodyFontSize,
+        questionFontWeight: d.questionFontWeight,
+        borderRadius: d.borderRadius,
+        cardPadding: d.cardPadding,
+        itemSpacing: d.itemSpacing,
+        containerMaxWidth: d.containerMaxWidth,
+        cardShadow: d.cardShadow,
+        cardBorderWidth: d.cardBorderWidth,
+        cardHoverEffect: d.cardHoverEffect,
+        iconStyle: d.iconStyle,
+        iconColor: d.iconColor,
+      };
+    };
+
     // Fetch FAQs and settings from the public API
     const apiUrl = `/apps/faqify/api/public/faqs?shop=${shop}&category=${category}`;
 
@@ -52,7 +77,13 @@ function initFaqifyWidgets() {
 
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
-        let targetSettings = customizedSettings[selectedTemplateId] || defaultSettings;
+        
+        // Merge theme editor settings over app dashboard settings
+        let targetSettings = {
+          ...defaultSettings,
+          ...(customizedSettings[selectedTemplateId] || {}),
+          ...getDatasetSettings()
+        };
 
         // Apply saved template settings initially
         applySettings(container, selectedTemplateId, targetSettings);
@@ -133,7 +164,11 @@ function initFaqifyWidgets() {
           
           const match = allTemplatesList.find(t => t.id === newTemplateId);
           const defaultSettings = match ? match.defaultSettings : {};
-          let targetSettings = customizedSettings[newTemplateId] || defaultSettings;
+          let targetSettings = {
+            ...defaultSettings,
+            ...(customizedSettings[newTemplateId] || {}),
+            ...getDatasetSettings()
+          };
 
           // Apply settings and re-render
           applySettings(container, newTemplateId, targetSettings);
@@ -242,6 +277,21 @@ function initFaqifyWidgets() {
     }
 
     function renderFaqs(faqs, templateId) {
+      // Check Plan Limitations
+      if (allTemplatesList.length > 0) {
+        const match = allTemplatesList.find(t => t.id === templateId);
+        if (match && !canUseTemplate(match.tier, activePlan)) {
+          contentArea.innerHTML = `
+            <div style="text-align:center; padding: 40px; background: #fff3cd; color: #856404; border-radius: 8px; border: 1px solid #ffeeba;">
+              <h3 style="margin-top: 0;">Premium Template Locked 🔒</h3>
+              <p>This layout requires the <strong>${match.tier === 'starter' ? 'Starter' : 'Pro'} Plan</strong>.</p>
+              <p>Please upgrade your plan in the FAQify Pro app dashboard to use this template.</p>
+            </div>
+          `;
+          return;
+        }
+      }
+
       if (faqs.length === 0) {
         contentArea.innerHTML = '<p style="text-align:center;padding:40px;opacity:0.5;">No FAQs found matching your criteria.</p>';
         return;

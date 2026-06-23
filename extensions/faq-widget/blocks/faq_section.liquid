@@ -1,3 +1,6 @@
+{{ 'faq-widget.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'faq-widget.js' | asset_url }}" defer="defer"></script>
+
 <div class="faqify-widget-container" 
      data-shop="{{ shop.permanent_domain }}" 
      data-category="{{ section.settings.category_filter }}"

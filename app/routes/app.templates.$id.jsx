@@ -349,6 +349,7 @@ function FontLoader({ fontFamily }) {
 export default function TemplateEditor() {
   const { template, savedSettings, isCurrentlyActive, isUnlocked, unlockedTemplates } = useLoaderData();
   const navigate = useNavigate();
+  const submit = useSubmit();
   const fetcher = useFetcher();
   const navigation = useNavigation();
   const isNavigating = navigation.state !== "idle";
@@ -363,7 +364,12 @@ export default function TemplateEditor() {
     [draftSettings]
   );
 
-  const isSaving = fetcher.state !== "idle";
+  useEffect(() => {
+    setDraftSettings(savedSettings);
+    initialSettingsRef.current = JSON.stringify(savedSettings);
+  }, [savedSettings]);
+
+  const isSaving = fetcher.state !== "idle" || navigation.state !== "idle";
 
   // Show success toast when save completes
   useEffect(() => {
@@ -425,7 +431,7 @@ export default function TemplateEditor() {
     const formData = new FormData();
     formData.append("intent", "switchAndApply");
     formData.append("newTemplateId", newTemplateId);
-    fetcher.submit(formData, { method: "post" });
+    submit(formData, { method: "post" });
     shopify.toast.show("Switched and applied to store!");
   };
 

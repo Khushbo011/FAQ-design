@@ -30,21 +30,6 @@ export const loader = async ({ request }) => {
   return json({ activePlan, settings, templates: TEMPLATES });
 };
 
-export const action = async ({ request }) => {
-  const { admin, session } = await authenticate.admin(request);
-  const shop = session.shop;
-  const formData = await request.formData();
-  
-  const actionType = formData.get("actionType");
-
-  if (actionType === "applyTemplate") {
-    const templateId = formData.get("templateId");
-    await updateStoreSettings(shop, { activeTemplate: templateId });
-  }
-
-  return json({ success: true });
-};
-
 export default function TemplatesPage() {
   const { activePlan, settings, templates } = useLoaderData();
   const fetcher = useFetcher();
@@ -66,10 +51,6 @@ export default function TemplatesPage() {
     return false;
   };
 
-  const handleApply = (templateId) => {
-    fetcher.submit({ actionType: "applyTemplate", templateId }, { method: "post" });
-    shopify.toast.show("Template Applied Successfully");
-  };
 
   const handleUpgrade = (tier, templateId) => {
     setLoadingTemplateId(templateId);
@@ -103,7 +84,6 @@ export default function TemplatesPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {templates.map((template) => {
             const isUnlocked = canUseTemplate(template.tier);
-            const isActive = settings.activeTemplate === template.id;
 
             return (
               <Card key={template.id} padding="0">
@@ -149,13 +129,11 @@ export default function TemplatesPage() {
 
                     {isUnlocked ? (
                       <Button
-                        variant={isActive ? "secondary" : "primary"}
-                        disabled={isActive || (isFetching && fetcher.formData?.get("templateId") === template.id)}
-                        loading={isFetching && fetcher.formData?.get("templateId") === template.id}
+                        variant="primary"
                         fullWidth
-                        onClick={() => handleApply(template.id)}
+                        onClick={() => handlePreviewCustomize(template)}
                       >
-                        {isActive ? "✓ Applied" : "Apply Template"}
+                        Customize Template
                       </Button>
                     ) : (
                       <Button

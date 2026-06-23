@@ -132,9 +132,14 @@ export const loader = async ({ request, params }) => {
 
   let savedSettings = {};
   try {
-    const saved = JSON.parse(settings.templateSettings || "{}");
-    if (settings.activeTemplate === template.id && Object.keys(saved).length > 0) {
-      savedSettings = saved;
+    let allSettings = JSON.parse(settings.templateSettings || "{}");
+    // Handle backwards compatibility for old flat structures
+    if (!allSettings.classic && !allSettings.grid && !allSettings.split && !allSettings.card && !allSettings.masonry && !allSettings.dark && Object.keys(allSettings).length > 0) {
+      allSettings = { [settings.activeTemplate]: allSettings };
+    }
+    
+    if (allSettings[template.id]) {
+      savedSettings = allSettings[template.id];
     } else {
       savedSettings = template.defaultSettings;
     }
@@ -160,22 +165,29 @@ export const action = async ({ request, params }) => {
   const intent = formData.get("intent");
   const templateSettings = formData.get("templateSettings");
 
-  if (intent === "save") {
-    // Save settings only — don't change active template
+  if (intent === "save" || intent === "apply") {
     const currentSettings = await getStoreSettings(shop);
-    // If this template is already active, update its settings
-    if (currentSettings.activeTemplate === templateId) {
-      await updateStoreSettings(shop, { templateSettings });
-    } else {
-      // Save settings but keep the current active template
-      await updateStoreSettings(shop, { templateSettings });
+    let allSettings = {};
+    try {
+      allSettings = JSON.parse(currentSettings.templateSettings || "{}");
+      if (!allSettings.classic && !allSettings.grid && !allSettings.split && !allSettings.card && !allSettings.masonry && !allSettings.dark && Object.keys(allSettings).length > 0) {
+        allSettings = { [currentSettings.activeTemplate]: allSettings };
+      }
+    } catch {
+      allSettings = {};
     }
-  } else if (intent === "apply") {
-    // Save + set as active template
-    await updateStoreSettings(shop, {
-      activeTemplate: templateId,
-      templateSettings,
-    });
+
+    // Merge in the new settings for this specific template
+    allSettings[templateId] = JSON.parse(templateSettings);
+
+    const updateData = { templateSettings: JSON.stringify(allSettings) };
+    
+    // Optionally keep 'apply' to set the fallback activeTemplate if needed
+    if (intent === "apply") {
+      updateData.activeTemplate = templateId;
+    }
+
+    await updateStoreSettings(shop, updateData);
   }
 
   return json({ success: true, intent });
@@ -348,10 +360,7 @@ export default function TemplateEditor() {
   // Show success toast when save completes
   useEffect(() => {
     if (fetcher.data?.success) {
-      const msg =
-        fetcher.data.intent === "apply"
-          ? "Template applied to your store!"
-          : "Template settings saved!";
+      const msg = "Template settings saved! You can select this template from the Theme Editor.";
       shopify.toast.show(msg);
       initialSettingsRef.current = JSON.stringify(draftSettings);
     }
@@ -419,8 +428,8 @@ export default function TemplateEditor() {
           <div>
             <Text variant="headingLg" as="h1">{template.name}</Text>
             <div style={{ display: "flex", gap: "8px", marginTop: "4px", alignItems: "center" }}>
-              <Badge tone={isCurrentlyActive ? "success" : "info"}>
-                {isCurrentlyActive ? "Active on Store" : template.tier.toUpperCase()}
+              <Badge tone="info">
+                {template.tier.toUpperCase()}
               </Badge>
               {hasChanges && <Badge tone="attention">Unsaved Changes</Badge>}
             </div>
@@ -439,20 +448,7 @@ export default function TemplateEditor() {
               🔒 Upgrade
             </Button>
           )}
-          {isUnlocked ? (
-            <Button
-              variant="primary"
-              onClick={handleApply}
-              disabled={isSaving}
-              loading={isSaving && fetcher.formData?.get("intent") === "apply"}
-            >
-              ✦ Apply to Store
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={() => navigate("/app/billing")}>
-              🔒 Upgrade to Apply
-            </Button>
-          )}
+
         </div>
       </div>
 

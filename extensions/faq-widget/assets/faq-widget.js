@@ -50,13 +50,9 @@ function initFaqifyWidgets() {
         customizedSettings = data.templateSettings || {};
         allTemplatesList = data.allTemplates || [];
 
-        let targetSettings = {};
-        if (selectedTemplateId === activeTemplate) {
-          targetSettings = customizedSettings;
-        } else {
-          const match = allTemplatesList.find(t => t.id === selectedTemplateId);
-          targetSettings = match ? match.defaultSettings : {};
-        }
+        const match = allTemplatesList.find(t => t.id === selectedTemplateId);
+        const defaultSettings = match ? match.defaultSettings : {};
+        let targetSettings = customizedSettings[selectedTemplateId] || defaultSettings;
 
         // Apply saved template settings initially
         applySettings(container, selectedTemplateId, targetSettings);
@@ -135,16 +131,9 @@ function initFaqifyWidgets() {
           const newTemplateId = e.target.value;
           selectedTemplateId = newTemplateId;
           
-          // Determine which settings to apply
-          let targetSettings = {};
-          if (newTemplateId === activeTemplate) {
-            // Apply custom saved settings
-            targetSettings = customizedSettings;
-          } else {
-            // Apply default settings for this template
-            const match = allTemplatesList.find(t => t.id === newTemplateId);
-            targetSettings = match ? match.defaultSettings : {};
-          }
+          const match = allTemplatesList.find(t => t.id === newTemplateId);
+          const defaultSettings = match ? match.defaultSettings : {};
+          let targetSettings = customizedSettings[newTemplateId] || defaultSettings;
 
           // Apply settings and re-render
           applySettings(container, newTemplateId, targetSettings);

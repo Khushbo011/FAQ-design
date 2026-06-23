@@ -46,11 +46,16 @@ export const loader = async ({ request }) => {
       "Access-Control-Allow-Methods": "GET, OPTIONS",
     });
 
+    let parsedSettings = JSON.parse(settings.templateSettings || "{}");
+    if (!parsedSettings.classic && !parsedSettings.grid && !parsedSettings.split && !parsedSettings.card && !parsedSettings.masonry && !parsedSettings.dark && Object.keys(parsedSettings).length > 0) {
+      parsedSettings = { [settings.activeTemplate]: parsedSettings };
+    }
+
     return json({
       faqs: formattedFaqs,
       activePlan,
       activeTemplate: settings.activeTemplate,
-      templateSettings: JSON.parse(settings.templateSettings || "{}"),
+      templateSettings: parsedSettings,
       allTemplates: TEMPLATES
     }, { headers });
   } catch (error) {

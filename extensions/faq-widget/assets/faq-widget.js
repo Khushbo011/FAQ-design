@@ -46,7 +46,7 @@ function initFaqifyWidgets() {
         currentFaqs = [...allFaqs];
         activePlan = data.activePlan || "Free";
         activeTemplate = data.activeTemplate || "classic";
-        selectedTemplateId = styleOverride || activeTemplate || "classic";
+        selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : (activeTemplate || "classic");
         customizedSettings = data.templateSettings || {};
         allTemplatesList = data.allTemplates || [];
 

@@ -3,7 +3,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate, useNavigation } from "@remix-run/react";
 import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-import { getStoreSettings } from "../models/settings.server";
+import { getStoreSettings, updateStoreSettings } from "../models/settings.server";
 import { TEMPLATES } from "../lib/templates";
 
 export const loader = async ({ request }) => {
@@ -30,6 +30,21 @@ export const loader = async ({ request }) => {
   return json({ activePlan, settings, templates: TEMPLATES });
 };
 
+export const action = async ({ request }) => {
+  const { admin, session } = await authenticate.admin(request);
+  const shop = session.shop;
+  const formData = await request.formData();
+  
+  const actionType = formData.get("actionType");
+
+  if (actionType === "applyTemplate") {
+    const templateId = formData.get("templateId");
+    await updateStoreSettings(shop, { activeTemplate: templateId });
+  }
+
+  return json({ success: true });
+};
+
 export default function TemplatesPage() {
   const { activePlan, settings, templates } = useLoaderData();
   const fetcher = useFetcher();
@@ -49,6 +64,11 @@ export default function TemplatesPage() {
     if (tier === "starter" && (activePlan === "Starter" || activePlan === "Pro")) return true;
     if (tier === "pro" && activePlan === "Pro") return true;
     return false;
+  };
+
+  const handleApply = (templateId) => {
+    fetcher.submit({ actionType: "applyTemplate", templateId }, { method: "post" });
+    shopify.toast.show("Template Applied Successfully");
   };
 
 
@@ -84,6 +104,7 @@ export default function TemplatesPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {templates.map((template) => {
             const isUnlocked = canUseTemplate(template.tier);
+            const isActive = settings.activeTemplate === template.id;
 
             return (
               <Card key={template.id} padding="0">
@@ -128,13 +149,22 @@ export default function TemplatesPage() {
                     </InlineStack>
 
                     {isUnlocked ? (
-                      <Button
-                        variant="primary"
-                        fullWidth
-                        onClick={() => handlePreviewCustomize(template)}
-                      >
-                        Customize Template
-                      </Button>
+                      <InlineStack gap="300" wrap={false}>
+                        <Button
+                          variant={isActive ? "secondary" : "primary"}
+                          disabled={isActive || (isFetching && fetcher.formData?.get("templateId") === template.id)}
+                          loading={isFetching && fetcher.formData?.get("templateId") === template.id}
+                          onClick={() => handleApply(template.id)}
+                        >
+                          {isActive ? "✓ Applied to Store" : "Apply to Store"}
+                        </Button>
+                        <Button
+                          variant="plain"
+                          onClick={() => handlePreviewCustomize(template)}
+                        >
+                          Customize
+                        </Button>
+                      </InlineStack>
                     ) : (
                       <Button
                         variant="primary"

@@ -39,13 +39,14 @@
   "settings": [
     { "type": "text", "id": "title", "label": "Section Title", "default": "Frequently Asked Questions" },
     { "type": "select", "id": "display_style", "label": "Display Style", "options": [
+        {"value": "app", "label": "App Dashboard Setting"},
         {"value": "classic", "label": "Classic Accordion"},
         {"value": "card", "label": "Modern Card"},
         {"value": "dark", "label": "Dark Mode Premium"},
         {"value": "split", "label": "Split Layout"},
         {"value": "grid", "label": "Grid Cards"},
         {"value": "masonry", "label": "Masonry Layout"}
-    ], "default": "classic" },
+    ], "default": "app" },
     { "type": "select", "id": "category_filter", "label": "Show Category", "options": [{"value": "all", "label": "All Categories"}], "default": "all" },
     { "type": "checkbox", "id": "show_search", "label": "Show Search Bar", "default": true },
     { "type": "checkbox", "id": "show_helpful_votes", "label": "Show Helpful/Not Helpful Buttons", "default": true },

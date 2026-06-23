@@ -360,7 +360,10 @@ export default function TemplateEditor() {
   // Show success toast when save completes
   useEffect(() => {
     if (fetcher.data?.success) {
-      const msg = "Template settings saved! You can select this template from the Theme Editor.";
+      const msg =
+        fetcher.data.intent === "apply"
+          ? "Template applied to your store!"
+          : "Template settings saved!";
       shopify.toast.show(msg);
       initialSettingsRef.current = JSON.stringify(draftSettings);
     }
@@ -428,8 +431,8 @@ export default function TemplateEditor() {
           <div>
             <Text variant="headingLg" as="h1">{template.name}</Text>
             <div style={{ display: "flex", gap: "8px", marginTop: "4px", alignItems: "center" }}>
-              <Badge tone="info">
-                {template.tier.toUpperCase()}
+              <Badge tone={isCurrentlyActive ? "success" : "info"}>
+                {isCurrentlyActive ? "Active on Store" : template.tier.toUpperCase()}
               </Badge>
               {hasChanges && <Badge tone="attention">Unsaved Changes</Badge>}
             </div>
@@ -440,11 +443,21 @@ export default function TemplateEditor() {
             Reset
           </Button>
           {isUnlocked ? (
-            <Button onClick={handleSave} disabled={isSaving} loading={isSaving && fetcher.formData?.get("intent") === "save"}>
-              Save
-            </Button>
+            <InlineStack gap="300" wrap={false}>
+              <Button onClick={handleSave} disabled={isSaving} loading={isSaving && fetcher.formData?.get("intent") === "save"}>
+                Save
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleApply}
+                disabled={isSaving}
+                loading={isSaving && fetcher.formData?.get("intent") === "apply"}
+              >
+                ✦ Apply to Store
+              </Button>
+            </InlineStack>
           ) : (
-            <Button onClick={() => navigate("/app/billing")}>
+            <Button variant="primary" onClick={() => navigate("/app/billing")}>
               🔒 Upgrade
             </Button>
           )}

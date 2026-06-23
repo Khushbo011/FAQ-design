@@ -138,7 +138,8 @@ function initFaqifyWidgets() {
         renderFaqs(currentFaqs, selectedTemplateId);
       });
 
-    if (searchInput) {
+    if (searchInput && !searchInput.dataset.initialized) {
+      searchInput.dataset.initialized = "true";
       searchInput.addEventListener("keyup", (e) => {
         const query = e.target.value.toLowerCase();
         let filtered = allFaqs.filter((faq) =>
@@ -487,8 +488,21 @@ if (document.readyState === "loading") {
 
 // Watch for Shopify Section Loader events in the customizer
 document.addEventListener("shopify:section:load", function (event) {
-  if (event.target.querySelector(".faqify-widget-container")) {
-    // If the loaded section is our FAQ widget, re-run initialization
+  const container = event.target.querySelector(".faqify-widget-container");
+  if (container) {
+    container.classList.remove("faqify-initialized");
+    initFaqifyWidgets();
+  }
+});
+
+// Also watch for block selection/updates
+document.addEventListener("shopify:block:select", function (event) {
+  const container = event.target.classList && event.target.classList.contains("faqify-widget-container") 
+    ? event.target 
+    : event.target.querySelector(".faqify-widget-container");
+    
+  if (container) {
+    container.classList.remove("faqify-initialized");
     initFaqifyWidgets();
   }
 });

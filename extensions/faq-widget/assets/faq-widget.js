@@ -35,18 +35,31 @@ function initFaqifyWidgets() {
       })
       .then((data) => {
         allFaqs = data.faqs || [];
+        if (allFaqs.length === 0) {
+          allFaqs = [
+            { id: "1", question: "How does shipping work?", answer: "We ship within 2-3 business days.", categoryName: "Shipping" },
+            { id: "2", question: "What is your return policy?", answer: "Returns accepted within 30 days.", categoryName: "Returns" },
+            { id: "3", question: "Do you offer international delivery?", answer: "Yes, we ship to over 100 countries worldwide.", categoryName: "Shipping" },
+            { id: "4", question: "How do I edit my store name?", answer: "Go to store settings in your dashboard to modify details.", categoryName: "General" }
+          ];
+        }
         currentFaqs = [...allFaqs];
         activePlan = data.activePlan || "Free";
         activeTemplate = data.activeTemplate || "classic";
-        selectedTemplateId = activeTemplate;
+        selectedTemplateId = styleOverride || activeTemplate || "classic";
         customizedSettings = data.templateSettings || {};
         allTemplatesList = data.allTemplates || [];
 
-        // Apply saved template settings initially
-        applySettings(container, selectedTemplateId, customizedSettings);
+        let targetSettings = {};
+        if (selectedTemplateId === activeTemplate) {
+          targetSettings = customizedSettings;
+        } else {
+          const match = allTemplatesList.find(t => t.id === selectedTemplateId);
+          targetSettings = match ? match.defaultSettings : {};
+        }
 
-        // Render storefront switcher dropdown
-        renderSwitcher();
+        // Apply saved template settings initially
+        applySettings(container, selectedTemplateId, targetSettings);
 
         // Render FAQs
         renderFaqs(currentFaqs, selectedTemplateId);

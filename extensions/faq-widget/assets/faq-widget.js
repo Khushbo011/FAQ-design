@@ -35,28 +35,8 @@ function initFaqifyWidgets() {
     ];
 
     const getDatasetSettings = () => {
-      const d = container.dataset;
-      return {
-        primaryColor: d.primaryColor,
-        secondaryColor: d.secondaryColor,
-        backgroundColor: d.backgroundColor,
-        textColor: d.textColor,
-        cardBackground: d.cardBackground,
-        borderColor: d.borderColor,
-        fontFamily: d.fontFamily,
-        headingFontSize: d.headingFontSize,
-        bodyFontSize: d.bodyFontSize,
-        questionFontWeight: d.questionFontWeight,
-        borderRadius: d.borderRadius,
-        cardPadding: d.cardPadding,
-        itemSpacing: d.itemSpacing,
-        containerMaxWidth: d.containerMaxWidth,
-        cardShadow: d.cardShadow,
-        cardBorderWidth: d.cardBorderWidth,
-        cardHoverEffect: d.cardHoverEffect,
-        iconStyle: d.iconStyle,
-        iconColor: d.iconColor,
-      };
+      // We are ignoring Theme Editor data attributes and strictly using the App Dashboard database settings.
+      return {};
     };
 
     // Fetch FAQs and settings from the public API
@@ -80,28 +60,18 @@ function initFaqifyWidgets() {
         currentFaqs = [...allFaqs];
         activePlan = data.activePlan || "Free";
         activeTemplate = data.activeTemplate || "classic";
-        selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : (activeTemplate || "classic");
+        selectedTemplateId = activeTemplate;
         customizedSettings = data.templateSettings || {};
         allTemplatesList = data.allTemplates || [];
 
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
         
-        let targetSettings;
-        if (styleOverride === "app") {
-          // Strictly use App Dashboard settings and active template
-          targetSettings = {
-            ...defaultSettings,
-            ...(customizedSettings[selectedTemplateId] || {})
-          };
-        } else {
-          // Merge theme editor schema settings over app dashboard settings
-          targetSettings = {
-            ...defaultSettings,
-            ...(customizedSettings[selectedTemplateId] || {}),
-            ...getDatasetSettings()
-          };
-        }
+        // Strictly use App Dashboard settings and active template
+        let targetSettings = {
+          ...defaultSettings,
+          ...(customizedSettings[selectedTemplateId] || {})
+        };
 
         // Apply saved template settings initially
         applySettings(container, selectedTemplateId, targetSettings);
@@ -121,20 +91,12 @@ function initFaqifyWidgets() {
         currentFaqs = [...allFaqs];
         activePlan = "Free"; // Assume Free on failure
         allTemplatesList = FALLBACK_TEMPLATES;
-        selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : "classic";
+        selectedTemplateId = "classic";
         
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
 
-        let targetSettings;
-        if (styleOverride === "app") {
-          targetSettings = defaultSettings;
-        } else {
-          targetSettings = {
-            ...defaultSettings,
-            ...getDatasetSettings()
-          };
-        }
+        let targetSettings = defaultSettings;
         
         applySettings(container, selectedTemplateId, targetSettings);
         renderFaqs(currentFaqs, selectedTemplateId);
@@ -201,8 +163,7 @@ function initFaqifyWidgets() {
           const defaultSettings = match ? match.defaultSettings : {};
           let targetSettings = {
             ...defaultSettings,
-            ...(customizedSettings[newTemplateId] || {}),
-            ...getDatasetSettings()
+            ...(customizedSettings[newTemplateId] || {})
           };
 
           // Apply settings and re-render

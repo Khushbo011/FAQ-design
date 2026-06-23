@@ -28,3 +28,8 @@ shop_deletion_url = "https://{{ APP_URL }}/webhooks"
 
 [pos]
 embedded = false
+
+[app_proxy]
+url = "{{ APP_URL }}"
+subpath = "faqify"
+prefix = "apps"

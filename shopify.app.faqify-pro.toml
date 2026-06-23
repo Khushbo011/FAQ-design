@@ -17,3 +17,8 @@ redirect_urls = [ "https://faq-design-g7wb.vercel.app/api/auth" ]
 
 [build]
 automatically_update_urls_on_dev = true
+
+[app_proxy]
+url = "https://faq-design-g7wb.vercel.app"
+subpath = "faqify"
+prefix = "apps"

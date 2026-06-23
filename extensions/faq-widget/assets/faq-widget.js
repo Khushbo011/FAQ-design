@@ -35,7 +35,6 @@ function initFaqifyWidgets() {
     ];
 
     const getDatasetSettings = () => {
-      // We are ignoring Theme Editor data attributes and strictly using the App Dashboard database settings.
       return {};
     };
 

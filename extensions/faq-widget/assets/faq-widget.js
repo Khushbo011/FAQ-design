@@ -87,12 +87,21 @@ function initFaqifyWidgets() {
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
         
-        // Merge theme editor settings over app dashboard settings
-        let targetSettings = {
-          ...defaultSettings,
-          ...(customizedSettings[selectedTemplateId] || {}),
-          ...getDatasetSettings()
-        };
+        let targetSettings;
+        if (styleOverride === "app") {
+          // Strictly use App Dashboard settings and active template
+          targetSettings = {
+            ...defaultSettings,
+            ...(customizedSettings[selectedTemplateId] || {})
+          };
+        } else {
+          // Merge theme editor schema settings over app dashboard settings
+          targetSettings = {
+            ...defaultSettings,
+            ...(customizedSettings[selectedTemplateId] || {}),
+            ...getDatasetSettings()
+          };
+        }
 
         // Apply saved template settings initially
         applySettings(container, selectedTemplateId, targetSettings);
@@ -114,7 +123,20 @@ function initFaqifyWidgets() {
         allTemplatesList = FALLBACK_TEMPLATES;
         selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : "classic";
         
-        applySettings(container, selectedTemplateId, getDatasetSettings());
+        const match = allTemplatesList.find(t => t.id === selectedTemplateId);
+        const defaultSettings = match ? match.defaultSettings : {};
+
+        let targetSettings;
+        if (styleOverride === "app") {
+          targetSettings = defaultSettings;
+        } else {
+          targetSettings = {
+            ...defaultSettings,
+            ...getDatasetSettings()
+          };
+        }
+        
+        applySettings(container, selectedTemplateId, targetSettings);
         renderFaqs(currentFaqs, selectedTemplateId);
       });
 

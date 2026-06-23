@@ -130,6 +130,9 @@ export const loader = async ({ request, params }) => {
   const isUnlocked = canUseTemplate(template.tier);
   const settings = await getStoreSettings(shop);
 
+  // Get unlocked templates for the dropdown
+  const unlockedTemplates = TEMPLATES.filter(t => canUseTemplate(t.tier));
+
   let savedSettings = {};
   try {
     let allSettings = JSON.parse(settings.templateSettings || "{}");
@@ -152,6 +155,7 @@ export const loader = async ({ request, params }) => {
     savedSettings,
     isCurrentlyActive: settings.activeTemplate === template.id,
     isUnlocked,
+    unlockedTemplates,
   });
 };
 
@@ -188,6 +192,10 @@ export const action = async ({ request, params }) => {
     }
 
     await updateStoreSettings(shop, updateData);
+  } else if (intent === "switchAndApply") {
+    const newTemplateId = formData.get("newTemplateId");
+    await updateStoreSettings(shop, { activeTemplate: newTemplateId });
+    return redirect(`/app/templates/${newTemplateId}`);
   }
 
   return json({ success: true, intent });
@@ -339,7 +347,7 @@ function FontLoader({ fontFamily }) {
 
 // ─── Main Component ───
 export default function TemplateEditor() {
-  const { template, savedSettings, isCurrentlyActive, isUnlocked } = useLoaderData();
+  const { template, savedSettings, isCurrentlyActive, isUnlocked, unlockedTemplates } = useLoaderData();
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const navigation = useNavigation();
@@ -412,6 +420,15 @@ export default function TemplateEditor() {
     setDraftSettings({ ...template.defaultSettings });
   };
 
+  const handleTemplateSwitch = (newTemplateId) => {
+    if (newTemplateId === template.id) return;
+    const formData = new FormData();
+    formData.append("intent", "switchAndApply");
+    formData.append("newTemplateId", newTemplateId);
+    fetcher.submit(formData, { method: "post" });
+    shopify.toast.show("Switched and applied to store!");
+  };
+
   // ─── Derived preview styles ───
   const ds = draftSettings;
   const previewWidth = previewMode === "mobile" ? "375px" : "100%";
@@ -429,7 +446,16 @@ export default function TemplateEditor() {
             <span>←</span>
           </button>
           <div>
-            <Text variant="headingLg" as="h1">{template.name}</Text>
+            <div style={{ width: "250px", marginBottom: "8px" }}>
+              <Select
+                label="Switch Template"
+                labelHidden
+                options={unlockedTemplates.map(t => ({ label: t.name, value: t.id }))}
+                value={template.id}
+                onChange={handleTemplateSwitch}
+                disabled={isSaving}
+              />
+            </div>
             <div style={{ display: "flex", gap: "8px", marginTop: "4px", alignItems: "center" }}>
               <Badge tone={isCurrentlyActive ? "success" : "info"}>
                 {isCurrentlyActive ? "Active on Store" : template.tier.toUpperCase()}
@@ -625,7 +651,7 @@ export default function TemplateEditor() {
                 width: previewWidth,
                 maxWidth: `${ds.containerMaxWidth || 800}px`,
                 backgroundColor: ds.backgroundColor || "#fff",
-                fontFamily: ds.fontFamily || "Inter, sans-serif",
+                fontFamily: ds.fontFamily ? `${ds.fontFamily}, sans-serif` : "Inter, sans-serif",
                 padding: "40px 30px",
                 borderRadius: "12px",
                 transition: "all 0.3s ease",
@@ -640,7 +666,7 @@ export default function TemplateEditor() {
                   fontSize: `${ds.headingFontSize || 24}px`,
                   fontWeight: "700",
                   marginBottom: `${parseInt(ds.itemSpacing || 12) * 2}px`,
-                  fontFamily: ds.fontFamily || "Inter, sans-serif",
+                  fontFamily: ds.fontFamily ? `${ds.fontFamily}, sans-serif` : "Inter, sans-serif",
                   letterSpacing: "-0.02em",
                   textAlign: template.id === "grid" || template.id === "masonry" ? "center" : "left",
                 }}
@@ -738,7 +764,7 @@ export default function TemplateEditor() {
                               lineHeight: "1.4",
                               flex: 1,
                               paddingRight: "12px",
-                              fontFamily: ds.fontFamily || "Inter, sans-serif",
+                              fontFamily: ds.fontFamily ? `${ds.fontFamily}, sans-serif` : "Inter, sans-serif",
                             }}
                           >
                             {faq.question}
@@ -759,7 +785,7 @@ export default function TemplateEditor() {
                               color: ds.textColor || "#333",
                               opacity: 0.75,
                               lineHeight: "1.7",
-                              fontFamily: ds.fontFamily || "Inter, sans-serif",
+                              fontFamily: ds.fontFamily ? `${ds.fontFamily}, sans-serif` : "Inter, sans-serif",
                             }}
                           >
                             {faq.answer}

@@ -25,6 +25,15 @@ function initFaqifyWidgets() {
     let selectedTemplateId = "classic";
     let selectedCategory = "all";
 
+    const FALLBACK_TEMPLATES = [
+      { id: "classic", name: "Classic Accordion", tier: "free" },
+      { id: "grid", name: "Grid Cards", tier: "starter" },
+      { id: "split", name: "Split Categories", tier: "starter" },
+      { id: "card", name: "Modern Card", tier: "starter" },
+      { id: "masonry", name: "Masonry Layout", tier: "pro" },
+      { id: "dark", name: "Dark Mode Premium", tier: "pro" }
+    ];
+
     const getDatasetSettings = () => {
       const d = container.dataset;
       return {
@@ -101,7 +110,11 @@ function initFaqifyWidgets() {
           { id: "4", question: "How do I edit my store name?", answer: "Go to store settings in your dashboard to modify details.", categoryName: "General" }
         ];
         currentFaqs = [...allFaqs];
-        selectedTemplateId = "classic";
+        activePlan = "Free"; // Assume Free on failure
+        allTemplatesList = FALLBACK_TEMPLATES;
+        selectedTemplateId = (styleOverride && styleOverride !== "app") ? styleOverride : "classic";
+        
+        applySettings(container, selectedTemplateId, getDatasetSettings());
         renderFaqs(currentFaqs, selectedTemplateId);
       });
 

@@ -4,6 +4,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useRouteError } from "@remix-run/react";
 import { Page, Layout, Badge } from "@shopify/polaris";
 import { authenticate, PLAN_STARTER, PLAN_PRO } from "../shopify.server";
+import db from "../db.server";
 
 export const loader = async ({ request }) => {
   const { billing } = await authenticate.admin(request);
@@ -58,6 +59,12 @@ export const action = async ({ request }) => {
           prorate: true,
         });
       }
+      
+      // Ensure our database knows the user downgraded
+      await db.billingRecord.deleteMany({
+        where: { shop: session.shop },
+      });
+
       return shopifyRedirect("/app/billing");
     }
 

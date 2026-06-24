@@ -87,19 +87,11 @@ function initFaqifyWidgets() {
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
         
-        let targetSettings;
-        if (styleOverride === "app") {
-          targetSettings = {
-            ...defaultSettings,
-            ...(customizedSettings[selectedTemplateId] || {})
-          };
-        } else {
-          targetSettings = {
-            ...defaultSettings,
-            ...(customizedSettings[selectedTemplateId] || {}),
-            ...getDatasetSettings()
-          };
-        }
+        let targetSettings = {
+          ...defaultSettings,
+          ...(customizedSettings[selectedTemplateId] || {}),
+          ...getDatasetSettings()
+        };
 
         // Apply saved template settings initially
         applySettings(container, selectedTemplateId, targetSettings);
@@ -124,15 +116,10 @@ function initFaqifyWidgets() {
         const match = allTemplatesList.find(t => t.id === selectedTemplateId);
         const defaultSettings = match ? match.defaultSettings : {};
 
-        let targetSettings;
-        if (styleOverride === "app") {
-          targetSettings = defaultSettings;
-        } else {
-          targetSettings = {
-            ...defaultSettings,
-            ...getDatasetSettings()
-          };
-        }
+        let targetSettings = {
+          ...defaultSettings,
+          ...getDatasetSettings()
+        };
         
         applySettings(container, selectedTemplateId, targetSettings);
         renderFaqs(currentFaqs, selectedTemplateId);

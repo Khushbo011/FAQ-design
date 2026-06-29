@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate, useNavigation } from "@remix-run/react";
 import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";

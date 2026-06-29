@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate, useNavigation } from "@remix-run/react";
 import { Page, Card, Text, Button, BlockStack, InlineStack, Badge, Banner, Box } from "@shopify/polaris";
@@ -66,11 +66,12 @@ export default function TemplatesPage() {
     return false;
   };
 
+  const lastSuccessData = useRef(null);
+
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.success) {
+    if (fetcher.state === "idle" && fetcher.data?.success && fetcher.data !== lastSuccessData.current) {
       shopify.toast.show("Template Applied Successfully");
-      // clear the data so it doesn't re-trigger
-      fetcher.data.success = false;
+      lastSuccessData.current = fetcher.data;
     }
   }, [fetcher.state, fetcher.data]);
 
@@ -155,14 +156,18 @@ export default function TemplatesPage() {
 
                     {isUnlocked ? (
                       <InlineStack gap="300" wrap={false}>
-                        <Button
-                          variant={isActive ? "secondary" : "primary"}
-                          disabled={isActive || (isFetching && fetcher.formData?.get("templateId") === template.id)}
-                          loading={isFetching && fetcher.formData?.get("templateId") === template.id}
-                          onClick={() => handleApply(template.id)}
-                        >
-                          {isActive ? "✓ Applied to Store" : "Apply to Store"}
-                        </Button>
+                        <fetcher.Form method="post" action="/app/templates?index">
+                          <input type="hidden" name="actionType" value="applyTemplate" />
+                          <input type="hidden" name="templateId" value={template.id} />
+                          <Button
+                            submit
+                            variant={isActive ? "secondary" : "primary"}
+                            disabled={isActive || (isFetching && fetcher.formData?.get("templateId") === template.id)}
+                            loading={isFetching && fetcher.formData?.get("templateId") === template.id}
+                          >
+                            {isActive ? "✓ Applied to Store" : "Apply to Store"}
+                          </Button>
+                        </fetcher.Form>
                         <Button
                           variant="plain"
                           onClick={() => handlePreviewCustomize(template)}

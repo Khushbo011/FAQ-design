@@ -66,12 +66,17 @@ export default function TemplatesPage() {
     return false;
   };
 
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      shopify.toast.show("Template Applied Successfully");
+      // clear the data so it doesn't re-trigger
+      fetcher.data.success = false;
+    }
+  }, [fetcher.state, fetcher.data]);
+
   const handleApply = (templateId) => {
-    fetcher.submit({ actionType: "applyTemplate", templateId }, { method: "post", action: "?index" });
-    shopify.toast.show("Template Applied Successfully");
+    fetcher.submit({ actionType: "applyTemplate", templateId }, { method: "post", action: "/app/templates?index" });
   };
-
-
   const handleUpgrade = (tier, templateId) => {
     setLoadingTemplateId(templateId);
     navigate("/app/billing");

@@ -67,7 +67,7 @@ export default function TemplatesPage() {
   };
 
   const handleApply = (templateId) => {
-    fetcher.submit({ actionType: "applyTemplate", templateId }, { method: "post" });
+    fetcher.submit({ actionType: "applyTemplate", templateId }, { method: "post", action: "?index" });
     shopify.toast.show("Template Applied Successfully");
   };
 

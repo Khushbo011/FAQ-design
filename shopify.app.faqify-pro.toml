@@ -20,7 +20,12 @@ api_version = "2026-07"
 scopes = ""
 
 [auth]
-redirect_urls = [ "https://premium-faq.hostnestic.online/api/auth" ]
+redirect_urls = [
+  "https://premium-faq.hostnestic.online/api/auth",
+  "https://premium-faq.hostnestic.online/auth/callback",
+  "https://premium-faq.hostnestic.online/auth/shopify/callback",
+  "https://premium-faq.hostnestic.online/api/auth/callback"
+]
 
 [app_proxy]
 url = "https://premium-faq.hostnestic.online"

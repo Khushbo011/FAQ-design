@@ -34,24 +34,24 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 // ─── Sample FAQ Data for Preview ───
 const SAMPLE_FAQS = [
   {
-    question: "How long does shipping take?",
+    question: "What are your business hours?",
     answer:
-      "Most orders are processed within 24 hours. Domestic shipping usually takes 3-5 business days. International shipping can take 7-14 business days depending on the destination.",
+      "Our customer support team is available Monday through Friday, from 9:00 AM to 5:00 PM EST. We typically respond to all inquiries within 24 hours.",
   },
   {
-    question: "What is your return policy?",
+    question: "How can I contact customer support?",
     answer:
-      "We offer a 30-day money-back guarantee. If you are not completely satisfied with your purchase, you can return it within 30 days for a full refund or exchange.",
+      "You can reach our support team by emailing support@ourstore.com or using the contact form on our website. We're always happy to help!",
   },
   {
-    question: "Do you offer international shipping?",
+    question: "Where are your products manufactured?",
     answer:
-      "Yes, we ship to over 100 countries worldwide. Shipping costs and estimated delivery times vary by destination and are calculated at checkout.",
+      "All our products are proudly designed and manufactured locally using ethically sourced, premium materials to ensure the highest quality standards.",
   },
   {
-    question: "How can I track my order?",
+    question: "Do you offer gift wrapping or personalized notes?",
     answer:
-      "Once your order ships, you'll receive a confirmation email with a tracking number. You can use this number to track your package on our website or the carrier's website.",
+      "Yes! We offer beautiful gift wrapping options and personalized handwritten notes at checkout for a small additional fee.",
   },
 ];
 
@@ -150,9 +150,14 @@ export const loader = async ({ request, params }) => {
     savedSettings = template.defaultSettings;
   }
 
+  // Get FAQs
+  const { getFaqs } = await import("../models/faq.server");
+  const dbFaqs = await getFaqs(shop);
+
   return json({
     template,
     savedSettings,
+    dbFaqs,
     isCurrentlyActive: settings.activeTemplate === template.id,
     isUnlocked,
     unlockedTemplates,
@@ -192,6 +197,30 @@ export const action = async ({ request, params }) => {
     }
 
     await updateStoreSettings(shop, updateData);
+
+    // Save FAQs
+    const faqsData = formData.get("faqsData");
+    if (faqsData) {
+      const { getFaqs, createFaq, deleteFaq } = await import("../models/faq.server");
+      const newFaqs = JSON.parse(faqsData);
+      
+      // Delete existing FAQs
+      const existingFaqs = await getFaqs(shop);
+      for (const faq of existingFaqs) {
+        await deleteFaq(faq.id, shop);
+      }
+      
+      // Create new FAQs
+      for (let i = 0; i < newFaqs.length; i++) {
+        await createFaq({
+          shop,
+          question: newFaqs[i].question,
+          answer: newFaqs[i].answer,
+          position: i,
+          isActive: true
+        });
+      }
+    }
   } else if (intent === "switchAndApply") {
     const newTemplateId = formData.get("newTemplateId");
     await updateStoreSettings(shop, { activeTemplate: newTemplateId });
@@ -347,7 +376,7 @@ function FontLoader({ fontFamily }) {
 
 // ─── Main Component ───
 export default function TemplateEditor() {
-  const { template, savedSettings, isCurrentlyActive, isUnlocked, unlockedTemplates } = useLoaderData();
+  const { template, savedSettings, dbFaqs, isCurrentlyActive, isUnlocked, unlockedTemplates } = useLoaderData();
   const navigate = useNavigate();
   const submit = useSubmit();
   const fetcher = useFetcher();
@@ -355,19 +384,25 @@ export default function TemplateEditor() {
   const isNavigating = navigation.state !== "idle";
 
   const [draftSettings, setDraftSettings] = useState(savedSettings);
+  const [draftFaqs, setDraftFaqs] = useState(dbFaqs.length > 0 ? dbFaqs : SAMPLE_FAQS);
   const [previewMode, setPreviewMode] = useState("desktop"); // "desktop" | "mobile"
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const initialSettingsRef = useRef(JSON.stringify(savedSettings));
+  const initialFaqsRef = useRef(JSON.stringify(dbFaqs.length > 0 ? dbFaqs : SAMPLE_FAQS));
 
   const hasChanges = useMemo(
-    () => JSON.stringify(draftSettings) !== initialSettingsRef.current,
-    [draftSettings]
+    () => JSON.stringify(draftSettings) !== initialSettingsRef.current || JSON.stringify(draftFaqs) !== initialFaqsRef.current,
+    [draftSettings, draftFaqs]
   );
 
   useEffect(() => {
     setDraftSettings(savedSettings);
     initialSettingsRef.current = JSON.stringify(savedSettings);
-  }, [savedSettings]);
+    
+    const initialFaqs = dbFaqs.length > 0 ? dbFaqs : SAMPLE_FAQS;
+    setDraftFaqs(initialFaqs);
+    initialFaqsRef.current = JSON.stringify(initialFaqs);
+  }, [savedSettings, dbFaqs]);
 
   const isSaving = fetcher.state !== "idle" || navigation.state !== "idle";
 
@@ -376,10 +411,11 @@ export default function TemplateEditor() {
     if (fetcher.data?.success) {
       const msg =
         fetcher.data.intent === "apply"
-          ? "Template applied to your store!"
-          : "Template settings saved!";
+          ? "Template and Content applied to your store!"
+          : "Template and Content saved!";
       shopify.toast.show(msg);
       initialSettingsRef.current = JSON.stringify(draftSettings);
+      initialFaqsRef.current = JSON.stringify(draftFaqs);
     }
   }, [fetcher.data]);
 
@@ -400,6 +436,21 @@ export default function TemplateEditor() {
     setDraftSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleFaqChange = (index, field, value) => {
+    const updatedFaqs = [...draftFaqs];
+    updatedFaqs[index] = { ...updatedFaqs[index], [field]: value };
+    setDraftFaqs(updatedFaqs);
+  };
+
+  const handleAddFaq = () => {
+    setDraftFaqs([...draftFaqs, { question: "New Question", answer: "New Answer" }]);
+  };
+
+  const handleRemoveFaq = (index) => {
+    const updatedFaqs = draftFaqs.filter((_, i) => i !== index);
+    setDraftFaqs(updatedFaqs);
+  };
+
   const handleSave = () => {
     if (!isUnlocked) {
       navigate("/app/billing");
@@ -408,6 +459,7 @@ export default function TemplateEditor() {
     const formData = new FormData();
     formData.append("intent", "save");
     formData.append("templateSettings", JSON.stringify(draftSettings));
+    formData.append("faqsData", JSON.stringify(draftFaqs));
     fetcher.submit(formData, { method: "post" });
   };
 
@@ -419,6 +471,7 @@ export default function TemplateEditor() {
     const formData = new FormData();
     formData.append("intent", "apply");
     formData.append("templateSettings", JSON.stringify(draftSettings));
+    formData.append("faqsData", JSON.stringify(draftFaqs));
     fetcher.submit(formData, { method: "post" });
   };
 
@@ -505,13 +558,47 @@ export default function TemplateEditor() {
         <div className="editor-sidebar">
           <div className="editor-sidebar-inner">
             {/* Colors */}
-            <SettingsSection title="Colors" icon="🎨">
+            <SettingsSection title="Colors" icon="🎨" defaultOpen={true}>
               <ColorPickerField label="Primary Color" value={ds.primaryColor} onChange={(v) => updateSetting("primaryColor", v)} />
               <ColorPickerField label="Secondary Color" value={ds.secondaryColor} onChange={(v) => updateSetting("secondaryColor", v)} />
               <ColorPickerField label="Background" value={ds.backgroundColor} onChange={(v) => updateSetting("backgroundColor", v)} />
               <ColorPickerField label="Text Color" value={ds.textColor} onChange={(v) => updateSetting("textColor", v)} />
               <ColorPickerField label="Card Background" value={ds.cardBackground} onChange={(v) => updateSetting("cardBackground", v)} />
               <ColorPickerField label="Border Color" value={ds.borderColor} onChange={(v) => updateSetting("borderColor", v)} />
+            </SettingsSection>
+
+            {/* Content Link */}
+            <SettingsSection title="Content" icon="📝" defaultOpen={true}>
+              <BlockStack gap="400">
+                {draftFaqs.map((faq, idx) => (
+                  <div key={idx} style={{ padding: '12px', border: '1px solid #e5e7eb', borderRadius: '6px', background: '#f9fafb' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <Text variant="headingSm" as="h4">FAQ {idx + 1}</Text>
+                      <button onClick={() => handleRemoveFaq(idx)} style={{ color: '#d32f2f', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}>
+                        Remove
+                      </button>
+                    </div>
+                    <BlockStack gap="200">
+                      <TextField
+                        label="Question"
+                        value={faq.question}
+                        onChange={(v) => handleFaqChange(idx, "question", v)}
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Answer"
+                        value={faq.answer}
+                        onChange={(v) => handleFaqChange(idx, "answer", v)}
+                        multiline={2}
+                        autoComplete="off"
+                      />
+                    </BlockStack>
+                  </div>
+                ))}
+                <Button fullWidth onClick={handleAddFaq} icon={<span style={{fontSize: '16px', marginRight: '6px'}}>+</span>}>
+                  Add FAQ
+                </Button>
+              </BlockStack>
             </SettingsSection>
 
             {/* Typography */}
@@ -682,17 +769,17 @@ export default function TemplateEditor() {
 
               {/* FAQ Items — render based on template type */}
               {template.id === "grid" || template.id === "masonry" ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: template.id === "masonry"
-                      ? `repeat(${previewMode === "mobile" ? 1 : 3}, 1fr)`
-                      : `repeat(${previewMode === "mobile" ? 1 : 2}, 1fr)`,
-                    gap: `${ds.itemSpacing || 12}px`,
-                  }}
-                >
-                  {SAMPLE_FAQS.map((faq, i) => (
-                    <div
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: template.id === "masonry"
+                        ? `repeat(${previewMode === "mobile" ? 1 : 3}, 1fr)`
+                        : `repeat(${previewMode === "mobile" ? 1 : 2}, 1fr)`,
+                      gap: `${ds.itemSpacing || 12}px`,
+                    }}
+                  >
+                    {draftFaqs.map((faq, i) => (
+                      <div
                       key={i}
                       className={`faq-card-preview hover-${ds.cardHoverEffect || "lift"}`}
                       style={{
@@ -733,7 +820,7 @@ export default function TemplateEditor() {
               ) : (
                 /* Accordion / Card / Split / Dark — all render as accordion items */
                 <div style={{ display: "flex", flexDirection: "column", gap: `${ds.itemSpacing || 12}px` }}>
-                  {SAMPLE_FAQS.map((faq, i) => {
+                  {draftFaqs.map((faq, i) => {
                     const isOpen = openFaqIndex === i;
                     return (
                       <div

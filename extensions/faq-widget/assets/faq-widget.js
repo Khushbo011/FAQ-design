@@ -25,6 +25,16 @@ function initFaqifyWidgets() {
     let selectedTemplateId = "classic";
     let selectedCategory = "all";
 
+    let blockFaqs = [];
+    const blockDataScript = container.querySelector(".faqify-block-data");
+    if (blockDataScript) {
+      try {
+        blockFaqs = JSON.parse(blockDataScript.textContent);
+      } catch (e) {
+        console.error("Failed to parse FAQ blocks", e);
+      }
+    }
+
     const FALLBACK_TEMPLATES = [
       { id: "classic", name: "Classic Accordion", tier: "free" },
       { id: "grid", name: "Grid Cards", tier: "starter" },
@@ -68,14 +78,18 @@ function initFaqifyWidgets() {
         return res.json();
       })
       .then((data) => {
-        allFaqs = data.faqs || [];
-        if (allFaqs.length === 0) {
-          allFaqs = [
-            { id: "1", question: "How does shipping work?", answer: "We ship within 2-3 business days.", categoryName: "Shipping" },
-            { id: "2", question: "What is your return policy?", answer: "Returns accepted within 30 days.", categoryName: "Returns" },
-            { id: "3", question: "Do you offer international delivery?", answer: "Yes, we ship to over 100 countries worldwide.", categoryName: "Shipping" },
-            { id: "4", question: "How do I edit my store name?", answer: "Go to store settings in your dashboard to modify details.", categoryName: "General" }
-          ];
+        if (blockFaqs && blockFaqs.length > 0) {
+          allFaqs = blockFaqs;
+        } else {
+          allFaqs = data.faqs || [];
+          if (allFaqs.length === 0) {
+            allFaqs = [
+              { id: "1", question: "What are your business hours?", answer: "Our customer support team is available Monday through Friday, from 9:00 AM to 5:00 PM EST.", categoryName: "General" },
+              { id: "2", question: "How can I contact customer support?", answer: "You can reach our support team by emailing support@ourstore.com.", categoryName: "General" },
+              { id: "3", question: "Where are your products manufactured?", answer: "All our products are proudly designed and manufactured locally.", categoryName: "General" },
+              { id: "4", question: "Do you offer gift wrapping or personalized notes?", answer: "Yes! We offer beautiful gift wrapping options.", categoryName: "General" }
+            ];
+          }
         }
         currentFaqs = [...allFaqs];
         activePlan = data.activePlan || "Free";
@@ -102,12 +116,16 @@ function initFaqifyWidgets() {
       .catch((err) => {
         console.error("FAQify Error:", err);
         // Fallback demo data
-        allFaqs = [
-          { id: "1", question: "How does shipping work?", answer: "We ship within 2-3 business days.", categoryName: "Shipping" },
-          { id: "2", question: "What is your return policy?", answer: "Returns accepted within 30 days.", categoryName: "Returns" },
-          { id: "3", question: "Do you offer international delivery?", answer: "Yes, we ship to over 100 countries worldwide.", categoryName: "Shipping" },
-          { id: "4", question: "How do I edit my store name?", answer: "Go to store settings in your dashboard to modify details.", categoryName: "General" }
-        ];
+        if (blockFaqs && blockFaqs.length > 0) {
+          allFaqs = blockFaqs;
+        } else {
+          allFaqs = [
+            { id: "1", question: "What are your business hours?", answer: "Our customer support team is available Monday through Friday, from 9:00 AM to 5:00 PM EST.", categoryName: "General" },
+            { id: "2", question: "How can I contact customer support?", answer: "You can reach our support team by emailing support@ourstore.com.", categoryName: "General" },
+            { id: "3", question: "Where are your products manufactured?", answer: "All our products are proudly designed and manufactured locally.", categoryName: "General" },
+            { id: "4", question: "Do you offer gift wrapping or personalized notes?", answer: "Yes! We offer beautiful gift wrapping options.", categoryName: "General" }
+          ];
+        }
         currentFaqs = [...allFaqs];
         activePlan = "Free"; // Assume Free on failure
         allTemplatesList = FALLBACK_TEMPLATES;
